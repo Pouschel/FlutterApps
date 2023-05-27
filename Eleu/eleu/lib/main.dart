@@ -1,9 +1,9 @@
 import 'dart:io'; // Platform
-import 'package:eleu/eleu.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:window_size/window_size.dart';
 import 'package:code_text_field/code_text_field.dart';
+import 'eleu.dart';
 
 void main() {
   setupWindow();

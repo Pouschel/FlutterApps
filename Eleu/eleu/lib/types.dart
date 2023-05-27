@@ -10,15 +10,14 @@ class Number {
     if (d == null) return null;
     return Number(d);
   }
+
   // internal Number(long l) { this.DVal = l; }
   // public bool IsDefined => double.IsFinite(DVal);
   // public bool IsZero => DVal == 0;
-  // public int IntValue => (int)DVal;
-  // public bool IsInt => IntValue == DVal;
-  // public override string ToString()
-  // {
-  // 	return DVal.ToString(CultureInfo.InvariantCulture);
-  // }
+  int get IntValue => (DVal - 0.5).round();
+  bool get IsInt => IntValue == DVal;
+  @override
+  String toString() => DVal.toString();
   // private static int Cmp(in Number a, in Number b) => a.DVal.CompareTo(b.DVal);
   // public bool Equals(Number other) => Cmp(this, other) == 0;
   // public int CompareTo(Number other) => Cmp(this, other);
