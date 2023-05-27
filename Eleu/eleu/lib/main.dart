@@ -1,4 +1,5 @@
 import 'dart:io'; // Platform
+import 'package:eleu/globals.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:window_size/window_size.dart';
@@ -66,6 +67,18 @@ class EleuCodeController extends CodeController {
   EleuCodeController() : super(patternMap: pMap, stringMap: sMap);
 }
 
+class UpdateWriter extends TextWriter {
+  late CodeEditorState _codeEditorState;
+  UpdateWriter(CodeEditorState cs) {
+    this._codeEditorState = cs;
+  }
+
+  @override
+  void WriteLine(String msg) {
+    _codeEditorState.infoText += "${msg}\n";
+  }
+}
+
 class CodeEditorState extends State<CodeEditor> {
   final CodeController _codeController = EleuCodeController();
   String infoText = "";
@@ -75,9 +88,14 @@ class CodeEditorState extends State<CodeEditor> {
 
   void updateLoop() {
     var scanner = Scanner(source: _codeController.text);
+    infoText = "";
     var tokens = scanner.ScanAllTokens();
-    var s = tokens.join("\n");
-    infoText = s;
+    var tw = UpdateWriter(this);
+    for (var tok in tokens) {
+      tw.WriteLine(tok.toString());
+    }
+    // var s = tokens.join("\n");
+    // infoText = s;
   }
 
   @override
