@@ -56,18 +56,19 @@ class EleuAssertionFail extends EleuRuntimeError {
   EleuAssertionFail(InputStatus? status, String msg) : super(status, msg);
 }
 
-class Globals
-{
-  static List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options)
-	{
-		var scanner = Scanner(source, fileName);
-		var tokens = scanner.ScanAllTokens();
+class Globals {
+  static List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options) {
+    var scanner = Scanner(source, fileName);
+    var tokens = scanner.ScanAllTokens();
     for (var tok in tokens) {
       options.Out.WriteLine(tok.toString());
     }
 
-		var parser = AstParser(options, fileName, tokens);
-		var parseResult = parser.Parse();
-		return parseResult;
-	}
+    var parser = AstParser(options, fileName, tokens);
+    var parseResult = parser.Parse();
+    for (var stmt in parseResult) {
+      options.Out.WriteLine(stmt.toString());
+    }
+    return parseResult;
+  }
 }
