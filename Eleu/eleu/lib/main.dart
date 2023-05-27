@@ -1,10 +1,9 @@
 import 'dart:io'; // Platform
-import 'package:eleu/globals.dart';
+import 'package:eleu/eleu.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:window_size/window_size.dart';
 import 'package:code_text_field/code_text_field.dart';
-import 'scanning.dart';
 
 void main() {
   setupWindow();
@@ -87,15 +86,10 @@ class CodeEditorState extends State<CodeEditor> {
   }
 
   void updateLoop() {
-    var scanner = Scanner(source: _codeController.text);
+    var opt = EleuOptions();
+    opt.Out = opt.Err = UpdateWriter(this);
     infoText = "";
-    var tokens = scanner.ScanAllTokens();
-    var tw = UpdateWriter(this);
-    for (var tok in tokens) {
-      tw.WriteLine(tok.toString());
-    }
-    // var s = tokens.join("\n");
-    // infoText = s;
+    Globals.ScanAndParse(_codeController.text, "", opt);
   }
 
   @override

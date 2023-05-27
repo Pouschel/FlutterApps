@@ -170,7 +170,7 @@ class Scanner {
   String _source = "";
   int line = 1, col = 1, startLine = 1, startCol = 1;
 
-  Scanner({source = "", fileName = ""}) {
+  Scanner(String source ,String fileName) {
     this._fileName = fileName;
     this._source = source;
     this.start = this.current = 0;
