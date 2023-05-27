@@ -1,8 +1,14 @@
 import 'dart:collection';
+import 'eleu.dart';
+import 'interpret/interpreter.dart';
 
 const Object NilValue = Object();
 
-
+abstract class ICallable {
+  Object Call(Interpreter interpreter, List<Object> arguments);
+  int get Arity => 0;
+  String get Name => "";
+}
 
 class Number {
   double DVal = 0;
@@ -56,4 +62,25 @@ class OTable {
   }
 
   bool ContainsKey(String key) => _map.containsKey(key);
+}
+
+class NativeFunction implements ICallable {
+  final NativeFn function;
+  final String name;
+
+  NativeFunction(this.name, this.function);
+
+  @override
+  int get Arity => -1; //todo function.Method.GetParameters().Length - 1;
+
+  @override
+  String get Name => name;
+
+  @override
+  Object Call(Interpreter interpreter, List<Object> arguments) {
+    return function(arguments);
+  }
+
+  @override
+  String toString() => "<native function>";
 }

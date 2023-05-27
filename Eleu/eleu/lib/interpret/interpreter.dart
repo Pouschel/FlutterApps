@@ -23,8 +23,9 @@ class Stack<E> {
   String toString() => _list.toString();
 }
 
-abstract class Interpreter extends IInterpreter
-    implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
+class Interpreter extends IInterpreter
+//implements ExprVisitor<Object>, StmtVisitor<InterpretResult>
+{
   final List<Stmt> statements;
   EleuEnvironment globals = EleuEnvironment(null);
   late EleuEnvironment environment;
@@ -43,6 +44,21 @@ abstract class Interpreter extends IInterpreter
   }
 
   InterpretResult ExecuteRelease(Stmt stmt) {
-    return stmt.Accept(this);
+    //TODO return stmt.Accept(this);
+    return InterpretResult.NilResult;
+  }
+
+  @override
+  void RuntimeError(String msg) => throw EleuRuntimeError(currentStatus, msg);
+
+  @override
+  void DefineNative(String name, NativeFn function) {
+    var ofun = NativeFunction(name, function);
+    globals.Define(name, ofun);
+  }
+
+  @override
+  EEleuResult Interpret() {
+    throw UnimplementedError();
   }
 }

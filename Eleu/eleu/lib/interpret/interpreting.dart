@@ -149,7 +149,7 @@ class EleuEnvironment
 	{
 		if (this == fence) return;
 
-		//todo for (var item in values)
+		//TODO for (var item in values)
 		// {
 		// 	if (item.Value is ICallable) continue;
 		// 	list.Add(new VariableInfo(item.Key, item.Value));
@@ -175,7 +175,7 @@ class VariableInfo
 
 	String get Value => Stringify(value);
 
-	//todo String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
+	//TODO String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
 
 	VariableInfo(this.name, this.value)
 	{
@@ -184,12 +184,7 @@ class VariableInfo
 	}
 }
 
-abstract class ICallable
-{
-	Object Call(Interpreter interpreter, List<Object> arguments);
-	int get Arity =>0;
-	String get Name =>"";
-}
+
 
 class CallStackInfo
 {
