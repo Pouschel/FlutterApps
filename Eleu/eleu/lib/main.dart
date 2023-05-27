@@ -30,7 +30,7 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    //final theme = Theme.of(context);
     return MaterialApp(
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 42, 3, 97)),
@@ -62,7 +62,7 @@ class EleuCodeController extends CodeController {
     "var": TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
   };
 
-  EleuCodeController() : super(patternMap: pMap, stringMap: sMap) {}
+  EleuCodeController() : super(patternMap: pMap, stringMap: sMap) 
 }
 
 class CodeEditorState extends State<CodeEditor> {
