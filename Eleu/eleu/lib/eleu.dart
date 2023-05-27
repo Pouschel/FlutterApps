@@ -1,4 +1,6 @@
-import 'Scanning.dart';
+import 'ast/ast_parser.dart';
+import 'ast/ast_stmt.dart';
+import 'scanning.dart';
 
 enum FunctionType { FunTypeFunction, FunTypeInitializer, FunTypeMethod, FunTypeScript }
 
@@ -56,7 +58,7 @@ class EleuAssertionFail extends EleuRuntimeError {
 
 class Globals
 {
-  static void ScanAndParse(String source, String fileName, EleuOptions options)
+  static List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options)
 	{
 		var scanner = Scanner(source, fileName);
 		var tokens = scanner.ScanAllTokens();
@@ -64,8 +66,8 @@ class Globals
       options.Out.WriteLine(tok.toString());
     }
 
-		// var parser = AstParser(options, fileName, tokens);
-		// var parseResult = parser.Parse();
-		// return parseResult;
+		var parser = AstParser(options, fileName, tokens);
+		var parseResult = parser.Parse();
+		return parseResult;
 	}
 }
