@@ -27,3 +27,29 @@ class EleuOptions {
     //print(msg);
   }
 }
+
+abstract class EleuException implements Exception {
+  InputStatus? Status;
+  String Message = "";
+
+  EleuException(InputStatus? status, String msg) {
+    this.Status = status;
+    this.Message = msg;
+  }
+}
+
+class EleuParseError extends EleuException {
+  EleuParseError() : super(null, "");
+}
+
+class EleuRuntimeError extends EleuException {
+  EleuRuntimeError(InputStatus? status, String msg) : super(status, msg);
+}
+
+class EleuResolverError extends EleuRuntimeError {
+  EleuResolverError(InputStatus? status, String msg) : super(status, msg);
+}
+
+class EleuAssertionFail extends EleuRuntimeError {
+  EleuAssertionFail(InputStatus? status, String msg) : super(status, msg);
+}
