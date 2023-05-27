@@ -1,3 +1,7 @@
+import 'dart:collection';
+
+const Object NilValue = Object();
+
 class Number {
   double DVal = 0;
 
@@ -36,4 +40,18 @@ class Number {
   Number operator *(Number b) => Number(this.DVal * b.DVal);
   Number operator /(Number b) => Number(this.DVal / b.DVal);
   Number operator %(Number b) => Number(this.DVal % b.DVal);
+}
+
+class OTable {
+  final Map<String, Object> _map = HashMap();
+
+  void Set(String name, Object val) => _map[name] = val;
+
+  Object Get(String name) {
+    var val = _map[name];
+    if (val == null) return NilValue;
+    return val;
+  }
+
+  bool ContainsKey(String key) => _map.containsKey(key);
 }

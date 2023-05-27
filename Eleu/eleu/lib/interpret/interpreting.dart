@@ -2,7 +2,7 @@ import '../native.dart';
 import '../eleu.dart';
 import '../types.dart';
 
-const Object NilValue = Object();
+
 
 String Stringify(Object val) => StringifyString(val, false);
 
@@ -92,4 +92,93 @@ class InterpretResult {
 
   @override
   String toString() => "${Stat}: ${Stringify(Value)}";
+}
+
+class EleuEnvironment
+{
+	final EleuEnvironment? enclosing;
+	final OTable values = OTable();
+
+	EleuEnvironment(this.enclosing);
+	void Define(String name, Object value) => values.Set(name, value);
+
+	Object GetAtDistance0(String name)=>values.Get(name);
+
+	bool ContainsAtDistance0(String name) => values.ContainsKey(name);
+	Object GetAt(String name, int distance)
+	{
+		var tab = Ancestor(distance)?.values;
+		var val= tab?.Get(name);
+		return val ?? NilValue;
+	}
+	void AssignAt(int distance, String name, Object value)
+		=> Ancestor(distance)?.values.Set(name, value);
+
+	EleuEnvironment? Ancestor(int distance)
+	{
+		EleuEnvironment? environment = this;
+		for (int i = 0; i < distance; i++)
+		{
+			environment = environment?.enclosing;
+		}
+		return environment;
+	}
+	Object Lookup(String name)
+	{
+		if (values.ContainsKey(name)) return values.Get(name);
+		if (enclosing != null)
+			return enclosing!.Lookup(name);
+		throw EleuRuntimeError(null, "Variable nicht definiert '$name'.");
+	}
+	void Assign(String name, Object value)
+	{
+		if (values.ContainsKey(name))
+		{
+			values.Set(name, value);
+			return;
+		}
+		if (enclosing != null)
+		{
+			enclosing!.Assign(name, value);
+			return;
+		}
+		throw EleuRuntimeError(null, "Variable nicht definiert '$name'.");
+	}
+	void GetNameAndValues(List<VariableInfo> list, EleuEnvironment? fence)
+	{
+		if (this == fence) return;
+
+		//todo for (var item in values)
+		// {
+		// 	if (item.Value is ICallable) continue;
+		// 	list.Add(new VariableInfo(item.Key, item.Value));
+		// }
+	}
+	
+  List<VariableInfo> GetVariableInfos(EleuEnvironment? fence)
+	{
+		var list = List<VariableInfo>.empty(growable: true);
+		this.GetNameAndValues(list, fence);
+		if (enclosing != null)
+			enclosing!.GetNameAndValues(list, fence);
+		return list;
+	}
+}
+
+class VariableInfo
+{
+	 String name;
+	 Object value;
+
+	String get Name => name;
+
+	String get Value => Stringify(value);
+
+	//todo String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
+
+	VariableInfo(this.name, this.value)
+	{
+		this.name = name;
+		this.value = value;
+	}
 }
