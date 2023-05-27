@@ -3,7 +3,7 @@ import '../scanning.dart';
 import '../types.dart';
 import 'ast_expr.dart';
 import 'ast_stmt.dart';
-import 'interpreter.dart';
+import '../interpret/interpreting.dart';
 
 abstract class ExprStmtBase {
   InputStatus? Status;
@@ -13,7 +13,7 @@ abstract class ExprStmtBase {
 }
 
 class AstParser {
-  static LiteralExpr NilLiteral = LiteralExpr(InterpreterStatics.NilValue),
+  static LiteralExpr NilLiteral = LiteralExpr(NilValue),
       TrueLiteral = LiteralExpr(true),
       FalseLiteral = LiteralExpr(false);
   List<Token> tokens = List.empty();

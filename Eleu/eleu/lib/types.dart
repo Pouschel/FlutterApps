@@ -18,23 +18,22 @@ class Number {
   bool get IsInt => IntValue == DVal;
   @override
   String toString() => DVal.toString();
-  // private static int Cmp(in Number a, in Number b) => a.DVal.CompareTo(b.DVal);
-  // public bool Equals(Number other) => Cmp(this, other) == 0;
-  // public int CompareTo(Number other) => Cmp(this, other);
-  // public override bool Equals([NotNullWhen(true)] object? obj)
-  // {
-  // 	if (obj is Number num) return this.Equals(num);
-  // 	return false;
-  // }
-  // public override int GetHashCode() => DVal.GetHashCode();
-  // public static Number operator -(in Number a, in Number b)
-  // {
-  // 	var dres = a.DVal - b.DVal;
-  // 	return new Number(dres);
-  // }
-  // public static Number operator -(in Number a) => new Number(-a.DVal);
-  // public static Number operator +(in Number a, in Number b) => new(a.DVal + b.DVal);
-  // public static Number operator *(in Number a, in Number b) => new(a.DVal * b.DVal);
-  // public static Number operator /(in Number a, in Number b) => new(a.DVal / b.DVal);
-  // public static Number operator %(in Number a, in Number b) => new(a.DVal % b.DVal);
+  @override
+  bool operator ==(Object other) {
+    if (other is Number) DVal == other.DVal;
+    return false;
+  }
+
+  @override
+  int get hashCode => DVal.hashCode;
+
+  static int Cmp(Number a, Number b) => a.DVal.compareTo(b.DVal);
+  int CompareTo(Number other) => Cmp(this, other);
+
+  Number operator +(Number a) => Number(this.DVal + a.DVal);
+  Number operator -(Number a) => Number(this.DVal - a.DVal);
+  Number operator -() => Number(-this.DVal);
+  Number operator *(Number b) => Number(this.DVal * b.DVal);
+  Number operator /(Number b) => Number(this.DVal / b.DVal);
+  Number operator %(Number b) => Number(this.DVal % b.DVal);
 }
