@@ -38,17 +38,20 @@ class InputStatus {
     if (other.LineStart < this.LineStart) {
       result.LineStart = other.LineStart;
       result.ColStart = other.ColStart;
-    } else if (other.LineStart == this.LineStart) result.ColStart = min(this.ColStart, other.ColStart);
+    } else if (other.LineStart == this.LineStart)
+      result.ColStart = min(this.ColStart, other.ColStart);
     if (other.LineEnd > this.LineEnd) {
       result.LineEnd = other.LineEnd;
       result.ColEnd = other.ColEnd;
-    } else if (other.LineEnd == this.LineEnd) result.ColEnd = max(this.ColEnd, other.ColEnd);
+    } else if (other.LineEnd == this.LineEnd)
+      result.ColEnd = max(this.ColEnd, other.ColEnd);
     return result;
   }
 
   String get Message => "${FileName}(${LineStart},${ColStart},${LineEnd},${ColEnd})";
 
-  String ToString() => Message;
+  @override
+  String toString() => Message;
 
   // String ReadPartialText()
   // {
@@ -78,7 +81,8 @@ class InputStatus {
     int idx0 = hint.lastIndexOf('(', idx);
     if (idx0 < 0) return Empty;
     var fileName = hint.substring(0, idx0);
-    var numbers = hint.substring((idx0 + 1), idx).split(',').map((s) => int.parse(s)).toList();
+    var numbers =
+        hint.substring((idx0 + 1), idx).split(',').map((s) => int.parse(s)).toList();
     return InputStatus(
       FileName: fileName,
       LineStart: numbers[0],
@@ -152,7 +156,12 @@ class Token {
   InputStatus Status = InputStatus.Empty;
   final String Source;
 
-  Token({this.Type = TokenType.TokenError, this.Source = "", this.Start = 0, this.End = 0, Status}) {
+  Token(
+      {this.Type = TokenType.TokenError,
+      this.Source = "",
+      this.Start = 0,
+      this.End = 0,
+      Status}) {
     // ignore: prefer_initializing_formals
     this.Status = Status;
   }
@@ -170,7 +179,7 @@ class Scanner {
   String _source = "";
   int line = 1, col = 1, startLine = 1, startCol = 1;
 
-  Scanner(String source ,String fileName) {
+  Scanner(String source, String fileName) {
     this._fileName = fileName;
     this._source = source;
     this.start = this.current = 0;
@@ -224,7 +233,8 @@ class Scanner {
       case '<':
         return MakeToken(Match('=') ? TokenType.TokenLessEqual : TokenType.TokenLess);
       case '>':
-        return MakeToken(Match('=') ? TokenType.TokenGreaterEqual : TokenType.TokenGreater);
+        return MakeToken(
+            Match('=') ? TokenType.TokenGreaterEqual : TokenType.TokenGreater);
       case '"':
         return ScanString();
       default:
@@ -426,8 +436,10 @@ class Scanner {
     return _source[current++];
   }
 
-  String Peek({int n = 0}) => current >= _source.length - n ? String.fromCharCode(0) : _source[current + n];
-  String PeekFromStart(int n) => start >= _source.length - n ? String.fromCharCode(0) : _source[start + n];
+  String Peek({int n = 0}) =>
+      current >= _source.length - n ? String.fromCharCode(0) : _source[current + n];
+  String PeekFromStart(int n) =>
+      start >= _source.length - n ? String.fromCharCode(0) : _source[start + n];
   bool get IsAtEnd => current >= _source.length;
 
   bool Match(String expected) {
@@ -438,11 +450,17 @@ class Scanner {
   }
 
   InputStatus CreateStatus() {
-    return InputStatus(FileName: _fileName, LineStart: startLine, LineEnd: line, ColStart: startCol, ColEnd: col);
+    return InputStatus(
+        FileName: _fileName,
+        LineStart: startLine,
+        LineEnd: line,
+        ColStart: startCol,
+        ColEnd: col);
   }
 
   Token MakeToken(TokenType type) {
-    Token token = Token(Type: type, Start: start, End: current, Source: _source, Status: CreateStatus());
+    Token token = Token(
+        Type: type, Start: start, End: current, Source: _source, Status: CreateStatus());
     return token;
   }
 

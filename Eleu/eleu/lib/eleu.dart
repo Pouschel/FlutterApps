@@ -72,3 +72,29 @@ class Globals {
     return parseResult;
   }
 }
+
+typedef NativeFn = Object Function(List<Object>);
+
+abstract class IInterpreter {
+  EleuOptions options;
+  InputStatus currentStatus = InputStatus.Empty;
+  //Puzzle? Puzzle;
+  //event PuzzleChangedDelegate? PuzzleChanged;
+  int FrameTimeMs = 100;
+  int InstructionCount = 0;
+  IInterpreter(this.options) {
+    this.options = options;
+    // NativeFunctionBase.DefineAll<NativeFunctions>(this);
+    // NativeFunctionBase.DefineAll<PuzzleFunctions>(this);
+  }
+  EEleuResult Interpret();
+  void RuntimeError(String msg);
+  void DefineNative(String name, NativeFn function);
+
+  //EEleuResult InterpretWithDebug(CancellationToken token);
+
+  // void NotifyPuzzleChange(Puzzle? newPuzzle, float animateState)
+  // {
+  // 	PuzzleChanged?.Invoke(newPuzzle, animateState);
+  // }
+}
