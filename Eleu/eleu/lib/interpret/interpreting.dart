@@ -1,6 +1,7 @@
 import '../native.dart';
 import '../eleu.dart';
 import '../types.dart';
+import 'interpreter.dart';
 
 
 
@@ -181,4 +182,28 @@ class VariableInfo
 		this.name = name;
 		this.value = value;
 	}
+}
+
+abstract class ICallable
+{
+	Object Call(Interpreter interpreter, List<Object> arguments);
+	int get Arity =>0;
+	String get Name =>"";
+}
+
+class CallStackInfo
+{
+	final ICallable  Function; 
+	final EleuEnvironment Fence;
+	final Interpreter vm;
+	CallStackInfo(this.vm, this.Function, this.Fence);
+
+	@override
+   String toString()
+	{
+		String s = Function.Name;
+		return s;
+	}
+
+	List<VariableInfo> GetLocals() => vm.environment.GetVariableInfos(Fence);
 }
