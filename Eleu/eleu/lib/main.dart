@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:window_size/window_size.dart';
 import 'package:code_text_field/code_text_field.dart';
+import 'scanning.dart';
 
 void main() {
   setupWindow();
@@ -62,15 +63,23 @@ class EleuCodeController extends CodeController {
     "var": TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
   };
 
-  EleuCodeController() : super(patternMap: pMap, stringMap: sMap) 
+  EleuCodeController() : super(patternMap: pMap, stringMap: sMap);
 }
 
 class CodeEditorState extends State<CodeEditor> {
   final CodeController _codeController = EleuCodeController();
-
+  String infoText = "";
   CodeEditorState() {
     _codeController.text = 'print("Hello World")';
   }
+
+  void updateLoop() {
+    var scanner = Scanner(source: _codeController.text);
+    var tokens = scanner.ScanAllTokens();
+    var s = tokens.join("\n");
+    infoText = s;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -111,11 +120,7 @@ class CodeEditorState extends State<CodeEditor> {
         SizedBox(
           height: 10,
         ),
-        ElevatedButton(
-            onPressed: () => setState(() {
-                  _codeController.text = "new text";
-                }),
-            child: Text("Run")),
+        ElevatedButton(onPressed: () => setState(updateLoop), child: Text("Run")),
         SizedBox(
           height: 10,
         ),
@@ -126,7 +131,7 @@ class CodeEditorState extends State<CodeEditor> {
             child: Align(
               alignment: Alignment.topLeft,
               child: Text(
-                "data\nZ2",
+                infoText,
                 style: theme.textTheme.bodySmall,
                 textAlign: TextAlign.left,
               ),
