@@ -22,18 +22,18 @@ abstract class ExprVisitor<R> {
 abstract class Expr extends ExprStmtBase {
   R Accept<R>(ExprVisitor<R> visitor);
 
-  static Expr Assign(String Name, Expr Value) => AssignExpr(Name, Value);
-  static Expr Binary(Expr Left, Token Op, Expr Right) => BinaryExpr(Left, Op, Right);
-  static Expr Call(Expr Callee, String? Method, bool CallSuper, List<Expr> Arguments) => CallExpr(Callee, Method, CallSuper, Arguments);
-  static Expr Get(Expr Obj, String Name) => GetExpr(Obj, Name);
-  static Expr Grouping(Expr Expression) => GroupingExpr(Expression);
-  static Expr Literal(Object? Value) => LiteralExpr(Value);
-  static Expr Logical(Expr Left, Token Op, Expr Right) => LogicalExpr(Left, Op, Right);
-  static Expr Set(Expr Obj, String Name, Expr Value) => SetExpr(Obj, Name, Value);
-  static Expr Super(String Keyword, String Method) => SuperExpr(Keyword, Method);
-  static Expr This(String Keyword) => ThisExpr(Keyword);
-  static Expr Unary(Token Op, Expr Right) => UnaryExpr(Op, Right);
-  static Expr Variable(String Name) => VariableExpr(Name);
+  static AssignExpr Assign(String Name, Expr Value) => AssignExpr(Name, Value);
+  static BinaryExpr Binary(Expr Left, Token Op, Expr Right) => BinaryExpr(Left, Op, Right);
+  static CallExpr Call(Expr Callee, String? Method, bool CallSuper, List<Expr> Arguments) => CallExpr(Callee, Method, CallSuper, Arguments);
+  static GetExpr Get(Expr Obj, String Name) => GetExpr(Obj, Name);
+  static GroupingExpr Grouping(Expr Expression) => GroupingExpr(Expression);
+  static LiteralExpr Literal(Object? Value) => LiteralExpr(Value);
+  static LogicalExpr Logical(Expr Left, Token Op, Expr Right) => LogicalExpr(Left, Op, Right);
+  static SetExpr Set(Expr Obj, String Name, Expr Value) => SetExpr(Obj, Name, Value);
+  static SuperExpr Super(String Keyword, String Method) => SuperExpr(Keyword, Method);
+  static ThisExpr This(String Keyword) => ThisExpr(Keyword);
+  static UnaryExpr Unary(Token Op, Expr Right) => UnaryExpr(Op, Right);
+  static VariableExpr Variable(String Name) => VariableExpr(Name);
 }
 
   // Nested Expr classes here...

@@ -42,7 +42,7 @@ ${expected}''';
     {
       // var col = Console.ForegroundColor;
       // Console.ForegroundColor = ConsoleColor.Magenta;
-      print("\r${fileName}              ");
+      print("\r${fileName.replaceAll("\\", "/")}              ");
       //Console.ForegroundColor = col;
       print(msg);
     }
@@ -160,7 +160,7 @@ void printSuccess(String text) {
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/datatypes/nil/literal.eleu";
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/variable/unreached_undefined.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);

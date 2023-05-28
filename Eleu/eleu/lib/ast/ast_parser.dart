@@ -36,12 +36,11 @@ class AstParser {
 
   void Declaration(List<Stmt> statements) {
     try {
-      if (Match(TokenType.TokenVar))
-        statements.add(VarDeclaration());
-      // if (Match(TokenType.TokenFun))
-      //    statements.add(Function(FunTypeFunction));
-      // // else if (Match(TokenType.TokenClass))
-      //   statements.add(ClassDeclaration());
+      if (Match(TokenType.TokenVar)) statements.add(VarDeclaration());
+      if (Match(TokenType.TokenFun))
+        statements.add(Function(FunctionType.FunTypeFunction));
+      else if (Match(TokenType.TokenClass))
+        statements.add(ClassDeclaration());
       else
         statements.add(Statement());
     } on EleuParseError {
@@ -64,8 +63,10 @@ class AstParser {
       stmt = ReturnStatement();
     else if (Match(TokenType.TokenWhile))
       stmt = WhileStatement();
-    else if (Match(TokenType.TokenRepeat)) stmt = RepeatStatement();
-    else if (MatchList([TokenType.TokenContinue, TokenType.TokenBreak])) stmt = BreakContinueStatement();
+    else if (Match(TokenType.TokenRepeat))
+      stmt = RepeatStatement();
+    else if (MatchList([TokenType.TokenContinue, TokenType.TokenBreak]))
+      stmt = BreakContinueStatement();
     else
       stmt = ExpressionStatement();
 
@@ -92,13 +93,15 @@ class AstParser {
     Consume(TokenType.TokenRightBrace, "Nach einem Block wird '}' erwartet.");
     return statements;
   }
-	Stmt BreakContinueStatement()
-	{
-		Token keyword = Previous;
-		Consume(TokenType.TokenSemicolon, "Nach '${keyword.StringValue}' wird ein ';' erwartet.");
-		bool isBreak = keyword.Type == TokenType.TokenBreak;
-		return Stmt.BreakContinue(isBreak);
-	}
+
+  Stmt BreakContinueStatement() {
+    Token keyword = Previous;
+    Consume(
+        TokenType.TokenSemicolon, "Nach '${keyword.StringValue}' wird ein ';' erwartet.");
+    bool isBreak = keyword.Type == TokenType.TokenBreak;
+    return Stmt.BreakContinue(isBreak);
+  }
+
   Stmt ForStatement() {
     Consume(TokenType.TokenLeftParen, "Nach 'for' wird '(' erwartet.");
     Stmt? initializer;
@@ -143,14 +146,16 @@ class AstParser {
     }
     return Stmt.If(condition, thenBranch, elseBranch);
   }
-	Stmt RepeatStatement()
-	{
-		Consume(TokenType.TokenLeftParen, "Nach 'repeat' wird '(' erwartet.");
-		Expr numExpr = Expression();
-		Consume(TokenType.TokenRightParen, "Nach der Anzahl wird ')' erwartet.", status: numExpr.Status);
-		Stmt body = Statement();
-		return  Stmt.Repeat(numExpr, body);
-	}
+
+  Stmt RepeatStatement() {
+    Consume(TokenType.TokenLeftParen, "Nach 'repeat' wird '(' erwartet.");
+    Expr numExpr = Expression();
+    Consume(TokenType.TokenRightParen, "Nach der Anzahl wird ')' erwartet.",
+        status: numExpr.Status);
+    Stmt body = Statement();
+    return Stmt.Repeat(numExpr, body);
+  }
+
   Stmt ReturnStatement() {
     Token keyword = Previous;
     Expr? value;
@@ -190,6 +195,45 @@ class AstParser {
     var vstm = Stmt.Var(name.StringValue, initializer);
     vstm.Status = cs;
     return vstm;
+  }
+
+  FunctionStmt Function(FunctionType kind) {
+    Token name = Consume(TokenType.TokenIdentifier, "Expect $kind name.");
+    Consume(TokenType.TokenLeftParen, "Expect '(' after $kind name.");
+    List<Token> parameters = [];
+    if (!Check(TokenType.TokenRightParen)) {
+      do {
+        if (parameters.length >= 255) {
+          Error(Peek, "Can't have more than 255 parameters.");
+        }
+        parameters.add(Consume(TokenType.TokenIdentifier, "Expect parameter name."));
+      } while (Match(TokenType.TokenComma));
+    }
+    Consume(TokenType.TokenRightParen, "Nach den Parametern wird ')' erwartet.");
+    string tmsg = kind == FunctionType.FunTypeFunction ? "function" : "method";
+    Consume(TokenType.TokenLeftBrace, "Expect '{' before $tmsg body.");
+    List<Stmt> body = Block();
+    return Stmt.Function(kind, name.StringValue, parameters, body);
+  }
+
+  Stmt ClassDeclaration() {
+    var curStat = Previous.Status;
+    Token name = Consume(TokenType.TokenIdentifier, "Expect class name.");
+    VariableExpr? superclass;
+    if (Match(TokenType.TokenLess)) {
+      Consume(TokenType.TokenIdentifier, "Expect superclass name.");
+      superclass = Expr.Variable(Previous.StringValue);
+    }
+    curStat = Previous.Status.Union(curStat);
+    Consume(TokenType.TokenLeftBrace, "Expect '{' before class body.");
+    List<FunctionStmt> methods = [];
+    while (!Check(TokenType.TokenRightBrace) && !IsAtEnd()) {
+      methods.add(Function(FunctionType.FunTypeMethod));
+    }
+    Consume(TokenType.TokenRightBrace, "Expect '}' after class body.");
+    var cls = Stmt.Class(name.StringValue, superclass, methods);
+    cls.Status = curStat;
+    return cls;
   }
 
   Stmt ExpressionStatement() {

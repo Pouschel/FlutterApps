@@ -392,11 +392,11 @@ class Interpreter extends IInterpreter
     int distance = locals[expr] ?? 0;
     EleuClass superclass = environment.GetAt("super", distance) as EleuClass;
     EleuInstance obj = environment.GetAt("this", distance - 1) as EleuInstance;
-    EleuFunction? method = superclass.FindMethod(expr.Method) as EleuFunction;
+    var method = superclass.FindMethod(expr.Method);
     if (method == NilValue) {
       throw Error("Undefined property '${expr.Method}'.");
     }
-    return method.bind(obj);
+    return (method as EleuFunction). bind(obj);
   }
 
   @override

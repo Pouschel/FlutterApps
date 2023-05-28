@@ -23,17 +23,17 @@ abstract class StmtVisitor<R> {
 abstract class Stmt extends ExprStmtBase {
   R Accept<R>(StmtVisitor<R> visitor);
 
-  static Stmt Block(List<Stmt> Statements) => BlockStmt(Statements);
-  static Stmt Class(String Name, VariableExpr? Superclass, List<FunctionStmt> Methods) => ClassStmt(Name, Superclass, Methods);
-  static Stmt Expression(Expr expression) => ExpressionStmt(expression);
-  static Stmt Function(FunctionType Type, String Name, List<Token> Paras, List<Stmt> Body) => FunctionStmt(Type, Name, Paras, Body);
-  static Stmt If(Expr Condition, Stmt ThenBranch, Stmt? ElseBranch) => IfStmt(Condition, ThenBranch, ElseBranch);
-  static Stmt Assert(Expr expression, String? message, bool isErrorAssert) => AssertStmt(expression, message, isErrorAssert);
-  static Stmt Return(Token Keyword, Expr? Value) => ReturnStmt(Keyword, Value);
-  static Stmt BreakContinue(bool IsBreak) => BreakContinueStmt(IsBreak);
-  static Stmt Var(String Name, Expr? Initializer) => VarStmt(Name, Initializer);
-  static Stmt While(Expr Condition, Stmt Body, Expr? Increment) => WhileStmt(Condition, Body, Increment);
-  static Stmt Repeat(Expr Count, Stmt Body) => RepeatStmt(Count, Body);
+  static BlockStmt Block(List<Stmt> Statements) => BlockStmt(Statements);
+  static ClassStmt Class(String Name, VariableExpr? Superclass, List<FunctionStmt> Methods) => ClassStmt(Name, Superclass, Methods);
+  static ExpressionStmt Expression(Expr expression) => ExpressionStmt(expression);
+  static FunctionStmt Function(FunctionType Type, String Name, List<Token> Paras, List<Stmt> Body) => FunctionStmt(Type, Name, Paras, Body);
+  static IfStmt If(Expr Condition, Stmt ThenBranch, Stmt? ElseBranch) => IfStmt(Condition, ThenBranch, ElseBranch);
+  static AssertStmt Assert(Expr expression, String? message, bool isErrorAssert) => AssertStmt(expression, message, isErrorAssert);
+  static ReturnStmt Return(Token Keyword, Expr? Value) => ReturnStmt(Keyword, Value);
+  static BreakContinueStmt BreakContinue(bool IsBreak) => BreakContinueStmt(IsBreak);
+  static VarStmt Var(String Name, Expr? Initializer) => VarStmt(Name, Initializer);
+  static WhileStmt While(Expr Condition, Stmt Body, Expr? Increment) => WhileStmt(Condition, Body, Increment);
+  static RepeatStmt Repeat(Expr Count, Stmt Body) => RepeatStmt(Count, Body);
 }
 
   // Nested Stmt classes here...

@@ -52,7 +52,7 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
       Declare(param.StringValue);
       define(param.StringValue);
     }
-    Resolve(function.Body);
+    ResolveList(function.Body);
     EndScope();
     currentFunction = enclosingFunction;
   }
@@ -70,7 +70,7 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
   Object? Resolve(Object? o) {
     if (o is Expr) return ResolveExpr(o);
     if (o is Stmt) return ResolveStmt(o);
-    throw EleuResolverError(interpreter.currentStatus, "null resolving");
+   // throw EleuResolverError(interpreter.currentStatus, "null resolving");
   }
 
   void Declare(String name) {
@@ -113,34 +113,33 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
 
   @override
   Object? VisitAssignExpr(AssignExpr expr) {
-		Resolve(expr.Value);
-		ResolveLocal(expr, expr.Name);
-		return null;
+    Resolve(expr.Value);
+    ResolveLocal(expr, expr.Name);
+    return null;
   }
 
   @override
   Object? VisitBinaryExpr(BinaryExpr expr) {
-		Resolve(expr.Left);
-		Resolve(expr.Right);
-		return null;
+    Resolve(expr.Left);
+    Resolve(expr.Right);
+    return null;
   }
 
   @override
   Object? VisitBlockStmt(BlockStmt stmt) {
-		BeginScope();
-		Resolve(stmt.Statements);
-		EndScope();
-		return null;
+    BeginScope();
+    ResolveList(stmt.Statements);
+    EndScope();
+    return null;
   }
 
   @override
   Object? VisitBreakContinueStmt(BreakContinueStmt stmt) {
-		if (loopLevel == 0)
-		{
-			var s = stmt.IsBreak ? "break" : "continue";
-			Error(stmt.Status, "'${s}' ist hier nicht erlaubt.");
-		}
-		return null;
+    if (loopLevel == 0) {
+      var s = stmt.IsBreak ? "break" : "continue";
+      Error(stmt.Status, "'${s}' ist hier nicht erlaubt.");
+    }
+    return null;
   }
 
   @override
@@ -219,12 +218,12 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
 
   @override
   Object? VisitRepeatStmt(RepeatStmt stmt) {
-		Resolve(stmt.Count);
-		loopLevel++;
-		CheckEmptyBody(stmt.Body);
-		Resolve(stmt.Body);
-		loopLevel--;
-		return null;
+    Resolve(stmt.Count);
+    loopLevel++;
+    CheckEmptyBody(stmt.Body);
+    Resolve(stmt.Body);
+    loopLevel--;
+    return null;
   }
 
   @override
@@ -278,15 +277,14 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
 
   @override
   Object? VisitVariableExpr(VariableExpr expr) {
-		var scope = Peek();
+    var scope = Peek();
     //scope != null && scope.TryGetValue(expr.Name, out bool b) && !b
-		if (scope!=null)
-		{
+    if (scope != null) {
       if (scope[expr.Name] ?? false)
         Error(expr.Status, "Can't read local variable in its own initializer.");
-		}
-		ResolveLocal(expr, expr.Name);
-		return null;
+    }
+    ResolveLocal(expr, expr.Name);
+    return null;
   }
 
   @override
