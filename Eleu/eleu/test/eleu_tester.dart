@@ -125,7 +125,7 @@ ${expected}''';
   RunTests(string dir)  {
     testDirLen = dir.length;
     printInfo("Start Testing dir: ${dir}");
-    var watch = Stopwatch()..start();
+    var watch = Stopwatch();
     RunActionInDir(dir, TestFile);
 
     print("");

@@ -52,19 +52,122 @@ class AstParser {
   Stmt Statement() {
     Stmt stmt;
     var curStat = CurrentInputStatus;
+    if (Match(TokenType.TokenAssert))
+      stmt = AssertStatement();
+    else if (Match(TokenType.TokenLeftBrace))
+      stmt = Stmt.Block(Block());
+    else if (Match(TokenType.TokenIf))
+      stmt = IfStatement();
+    else if (Match(TokenType.TokenFor))
+      stmt = ForStatement();
+    else if (Match(TokenType.TokenReturn))
+      stmt = ReturnStatement();
+    else if (Match(TokenType.TokenWhile))
+      stmt = WhileStatement();
+    else if (Match(TokenType.TokenRepeat)) stmt = RepeatStatement();
+    else if (MatchList([TokenType.TokenContinue, TokenType.TokenBreak])) stmt = BreakContinueStatement();
+    else
+      stmt = ExpressionStatement();
 
-    //TODO if (Match(TokenType.TokenAssert)) stmt = AssertStatement();
-    // else if (Match(TokenType.TokenLeftBrace)) stmt = Stmt.Block(Block());
-    // else if (Match(TokenType.TokenFor)) stmt = ForStatement();
-    // else if (Match(TokenType.TokenIf)) stmt = IfStatement();
-    // else if (Match(TokenType.TokenReturn)) stmt = ReturnStatement();
-    // else if (Match(TokenType.TokenWhile)) stmt = WhileStatement();
-    // else if (Match(TokenType.TokenRepeat)) stmt = RepeatStatement();
-    // else if (MatchList([TokenType.TokenContinue, TokenType.TokenBreak])) stmt = BreakContinueStatement();
-    // else
-    stmt = ExpressionStatement();
     stmt.Status = curStat.Union(Previous.Status);
     return stmt;
+  }
+
+  Stmt AssertStatement() {
+    string? msg;
+    bool isErrorAssert = Check(TokenType.TokenBreak);
+    if (isErrorAssert) Advance();
+    Expr value = Expression();
+    if (Match(TokenType.TokenString)) msg = Previous.StringStringValue;
+    Consume(TokenType.TokenSemicolon,
+        "Nach der Bedingung wird eine Zeichenkette oder ein ';' erwartet.");
+    return Stmt.Assert(value, msg, isErrorAssert);
+  }
+
+  List<Stmt> Block() {
+    List<Stmt> statements = [];
+    while (!Check(TokenType.TokenRightBrace) && !IsAtEnd()) {
+      Declaration(statements);
+    }
+    Consume(TokenType.TokenRightBrace, "Nach einem Block wird '}' erwartet.");
+    return statements;
+  }
+	Stmt BreakContinueStatement()
+	{
+		Token keyword = Previous;
+		Consume(TokenType.TokenSemicolon, "Nach '${keyword.StringValue}' wird ein ';' erwartet.");
+		bool isBreak = keyword.Type == TokenType.TokenBreak;
+		return Stmt.BreakContinue(isBreak);
+	}
+  Stmt ForStatement() {
+    Consume(TokenType.TokenLeftParen, "Nach 'for' wird '(' erwartet.");
+    Stmt? initializer;
+    if (Match(TokenType.TokenSemicolon))
+      initializer = null;
+    else if (Match(TokenType.TokenVar))
+      initializer = VarDeclaration();
+    else
+      initializer = ExpressionStatement();
+    Expr? condition;
+    if (!Check(TokenType.TokenSemicolon)) {
+      condition = Expression();
+    }
+    Consume(TokenType.TokenSemicolon, "Expect ';' after loop condition.");
+    Expr? increment;
+    if (!Check(TokenType.TokenRightParen)) {
+      increment = Expression();
+    }
+    Consume(TokenType.TokenRightParen, "Expect ')' after for clauses.");
+    Stmt body = Statement();
+    condition ??= Expr.Literal(true);
+    if (increment != null) {
+      body = Stmt.Block([body, Stmt.Expression(increment)]);
+    }
+    // increment is needed in case of a continue in a for-loop.
+    body = Stmt.While(condition, body, increment);
+    if (initializer != null) {
+      body = Stmt.Block([initializer, body]);
+    }
+    return body;
+  }
+
+  Stmt IfStatement() {
+    Consume(TokenType.TokenLeftParen, "Nach 'if' wird '(' erwartet.");
+    Expr condition = Expression();
+    Consume(TokenType.TokenRightParen, "Nach der 'if'-Bedingung wird ')' erwartet.",
+        status: condition.Status);
+    Stmt thenBranch = Statement();
+    Stmt? elseBranch;
+    if (Match(TokenType.TokenElse)) {
+      elseBranch = Statement();
+    }
+    return Stmt.If(condition, thenBranch, elseBranch);
+  }
+	Stmt RepeatStatement()
+	{
+		Consume(TokenType.TokenLeftParen, "Nach 'repeat' wird '(' erwartet.");
+		Expr numExpr = Expression();
+		Consume(TokenType.TokenRightParen, "Nach der Anzahl wird ')' erwartet.", status: numExpr.Status);
+		Stmt body = Statement();
+		return  Stmt.Repeat(numExpr, body);
+	}
+  Stmt ReturnStatement() {
+    Token keyword = Previous;
+    Expr? value;
+    if (!Check(TokenType.TokenSemicolon)) {
+      value = Expression();
+    }
+    Consume(TokenType.TokenSemicolon, "Nach dem Rückgabewert wird ein ';' erwartet.");
+    return Stmt.Return(keyword, value);
+  }
+
+  Stmt WhileStatement() {
+    Consume(TokenType.TokenLeftParen, "Nach 'while' wird '(' erwartet.");
+    Expr condition = Expression();
+    Consume(TokenType.TokenRightParen, "Nach der 'while'-Bedingung wird ')' erwartet.",
+        status: condition.Status);
+    Stmt body = Statement();
+    return Stmt.While(condition, body, null);
   }
 
   Stmt VarDeclaration() {
@@ -75,16 +178,16 @@ class AstParser {
           "Das Schlüsselwort '${Peek.StringValue}' ist kein gültiger Variablenname.");
       throw EleuParseError();
     }
-    Token name = Consume(
-        TokenType.TokenIdentifier, "Der Name einer Variablen wird erwartet.", null);
+    Token name =
+        Consume(TokenType.TokenIdentifier, "Der Name einer Variablen wird erwartet.");
     Expr? initializer;
     if (Match(TokenType.TokenEqual)) {
       initializer = Expression();
     }
     cs = cs.Union(CurrentInputStatus);
-    Consume(TokenType.TokenSemicolon,
-        "Nach einer Variablendeklaration wird ';' erwartet.", null);
-    var vstm = Stmt.Var(name.StringValue, initializer); 
+    Consume(
+        TokenType.TokenSemicolon, "Nach einer Variablendeklaration wird ';' erwartet.");
+    var vstm = Stmt.Var(name.StringValue, initializer);
     vstm.Status = cs;
     return vstm;
   }
@@ -92,7 +195,7 @@ class AstParser {
   Stmt ExpressionStatement() {
     if (Match(TokenType.TokenSemicolon)) return Stmt.Expression(NilLiteral);
     Expr expr = Expression();
-    Consume(TokenType.TokenSemicolon, "Ein ';' wird hier erwartet.", null);
+    Consume(TokenType.TokenSemicolon, "Ein ';' wird hier erwartet.");
     return Stmt.Expression(expr);
   }
 
@@ -202,7 +305,7 @@ class AstParser {
         expr = FinishCall(expr, null);
       } else if (Match(TokenType.TokenDot)) {
         Token name =
-            Consume(TokenType.TokenIdentifier, "Expect property name after '.'.", null);
+            Consume(TokenType.TokenIdentifier, "Expect property name after '.'.");
         expr = Expr.Get(expr, name.StringValue);
       } else {
         break;
@@ -221,7 +324,7 @@ class AstParser {
         arguments.add(Expression());
       } while (Match(TokenType.TokenComma));
     }
-    Consume(TokenType.TokenRightParen, "Nach den Argumenten wird ')' erwartet.", null);
+    Consume(TokenType.TokenRightParen, "Nach den Argumenten wird ')' erwartet.");
     return Expr.Call(callee, mthName, callee is SuperExpr, arguments);
   }
 
@@ -237,9 +340,8 @@ class AstParser {
     }
     if (Match(TokenType.TokenSuper)) {
       Token keyword = Previous;
-      Consume(TokenType.TokenDot, "Expect '.' after 'super'.", null);
-      Token method =
-          Consume(TokenType.TokenIdentifier, "Expect superclass method name.", null);
+      Consume(TokenType.TokenDot, "Expect '.' after 'super'.");
+      Token method = Consume(TokenType.TokenIdentifier, "Expect superclass method name.");
       return Expr.Super(keyword.StringValue, method.StringValue);
     }
     if (Match(TokenType.TokenThis)) return Expr.This(Previous.StringValue);
@@ -248,7 +350,7 @@ class AstParser {
     }
     if (Match(TokenType.TokenLeftParen)) {
       Expr expr = Expression();
-      Consume(TokenType.TokenRightParen, "Expect ')' after expression.", null);
+      Consume(TokenType.TokenRightParen, "Expect ')' after expression.");
       return Expr.Grouping(expr);
     }
     throw Error(Previous, "Hier wird ein Ausdruck erwartet.");
@@ -268,7 +370,7 @@ class AstParser {
     return false;
   }
 
-  Token Consume(TokenType type, String message, InputStatus? status) {
+  Token Consume(TokenType type, String message, {InputStatus? status}) {
     if (Check(type)) return Advance();
     var stat = status ?? Previous.Status;
     ErrorAt(stat, message);
