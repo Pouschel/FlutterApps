@@ -27,7 +27,6 @@ class AstParser {
     List<Stmt> statements = List.empty(growable: true);
     while (!IsAtEnd()) {
       Declaration(statements);
-      Advance();
     }
     if (statements.isEmpty && Peek.Type == TokenType.TokenError && ErrorCount == 0) {
       ErrorAt(Peek.Status, Peek.StringValue);
@@ -37,14 +36,14 @@ class AstParser {
 
   void Declaration(List<Stmt> statements) {
     try {
-      //todo if (Match(TokenType.TokenFun))
-      //   statements.add(Function(FunTypeFunction));
-      // else if (Match(TokenType.TokenClass))
+      if (Match(TokenType.TokenVar))
+        statements.add(VarDeclaration());
+      // if (Match(TokenType.TokenFun))
+      //    statements.add(Function(FunTypeFunction));
+      // // else if (Match(TokenType.TokenClass))
       //   statements.add(ClassDeclaration());
-      // else if (Match(TokenType.TokenVar))
-      //   statements.add(VarDeclaration());
-      // else
-      statements.add(Statement());
+      else
+        statements.add(Statement());
     } on EleuParseError {
       Synchronize();
     }
@@ -54,7 +53,7 @@ class AstParser {
     Stmt stmt;
     var curStat = CurrentInputStatus;
 
-    //todo if (Match(TokenType.TokenAssert)) stmt = AssertStatement();
+    //TODO if (Match(TokenType.TokenAssert)) stmt = AssertStatement();
     // else if (Match(TokenType.TokenLeftBrace)) stmt = Stmt.Block(Block());
     // else if (Match(TokenType.TokenFor)) stmt = ForStatement();
     // else if (Match(TokenType.TokenIf)) stmt = IfStatement();
@@ -66,6 +65,28 @@ class AstParser {
     stmt = ExpressionStatement();
     stmt.Status = curStat.Union(Previous.Status);
     return stmt;
+  }
+
+  Stmt VarDeclaration() {
+    var cs = CurrentInputStatus;
+    if (Peek.Type.index >= TokenType.TokenKeywordStart.index &&
+        Peek.Type.index <= TokenType.TokenKeywordEnd.index) {
+      ErrorAt(Peek.Status,
+          "Das Schlüsselwort '${Peek.StringValue}' ist kein gültiger Variablenname.");
+      throw EleuParseError();
+    }
+    Token name = Consume(
+        TokenType.TokenIdentifier, "Der Name einer Variablen wird erwartet.", null);
+    Expr? initializer;
+    if (Match(TokenType.TokenEqual)) {
+      initializer = Expression();
+    }
+    cs = cs.Union(CurrentInputStatus);
+    Consume(TokenType.TokenSemicolon,
+        "Nach einer Variablendeklaration wird ';' erwartet.", null);
+    var vstm = Stmt.Var(name.StringValue, initializer); 
+    vstm.Status = cs;
+    return vstm;
   }
 
   Stmt ExpressionStatement() {

@@ -60,9 +60,9 @@ class EleuOptions {
   bool UseInterpreter = true;
 
   void WriteCompilerError(InputStatus status, String message) {
-    var msg = status.FileName.isEmpty ? message : "${status.Message}: Cerr: ${message}";
+    var msg = "${status.Message}: Cerr: ${message}";
     Err.WriteLine(msg);
-    //print(msg);
+    print(msg);
   }
 }
 
