@@ -1,5 +1,6 @@
 import 'ast/ast_parser.dart';
 import 'ast/ast_stmt.dart';
+import 'interpret/interpreter.dart';
 import 'native.dart';
 import 'scanning.dart';
 
@@ -20,6 +21,25 @@ List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options) {
     options.Out.WriteLine(stmt.toString());
   }
   return parseResult;
+}
+
+EEleuResult CompileAndRunAst(String source, String fileName, EleuOptions options) {
+  var (res, vm) = Compile(source, fileName, options);
+  if (res != EEleuResult.Ok) return res;
+  return vm!.Interpret();
+}
+
+(EEleuResult, IInterpreter?) Compile(
+    String source, String fileName, EleuOptions options) {
+  var scanner = Scanner(source, fileName);
+  var tokens = scanner.ScanAllTokens();
+  var parser = AstParser(options, fileName, tokens);
+  var parseResult = parser.Parse();
+  var presult = parser.ErrorCount > 0 ? EEleuResult.CompileError : EEleuResult.Ok;
+
+  if (presult != EEleuResult.Ok) return (presult, null);
+  var interpreter = Interpreter(options, parseResult, tokens);
+  return (presult, interpreter);
 }
 
 class TextWriter {

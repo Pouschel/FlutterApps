@@ -36,7 +36,8 @@ class MainApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 42, 3, 97)),
           useMaterial3: true,
-          textTheme: Theme.of(context).textTheme.apply(fontSizeFactor: 1.3, fontSizeDelta: 2),
+          textTheme:
+              Theme.of(context).textTheme.apply(fontSizeFactor: 1.3, fontSizeDelta: 2),
           //brightness: Brightness.dark,
         ),
         debugShowCheckedModeBanner: false,
@@ -82,14 +83,14 @@ class CodeEditorState extends State<CodeEditor> {
   final CodeController _codeController = EleuCodeController();
   String infoText = "";
   CodeEditorState() {
-    _codeController.text = 'print("Hello World")';
+    _codeController.text = 'print("Hello World");';
   }
 
   void updateLoop() {
     var opt = EleuOptions();
     opt.Out = opt.Err = UpdateWriter(this);
     infoText = "";
-    ScanAndParse(_codeController.text, "", opt);
+    CompileAndRunAst(_codeController.text, "", opt);
   }
 
   @override
@@ -114,7 +115,8 @@ class CodeEditorState extends State<CodeEditor> {
           child: Container(
             margin: const EdgeInsets.all(3.0),
             padding: const EdgeInsets.all(3.0),
-            decoration: BoxDecoration(border: Border.all(color: theme.dividerColor, width: 3)),
+            decoration:
+                BoxDecoration(border: Border.all(color: theme.dividerColor, width: 3)),
             child: SingleChildScrollView(
               child: CodeField(
                 controller: _codeController,
@@ -123,7 +125,8 @@ class CodeEditorState extends State<CodeEditor> {
                   color: Colors.black,
                   fontSize: theme.textTheme.bodyMedium!.fontSize,
                 ),
-                lineNumberStyle: LineNumberStyle(textStyle: TextStyle(color: theme.primaryColorDark)),
+                lineNumberStyle:
+                    LineNumberStyle(textStyle: TextStyle(color: theme.primaryColorDark)),
                 background: theme.canvasColor,
               ),
             ),
