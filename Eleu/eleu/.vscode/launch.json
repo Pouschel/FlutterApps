@@ -20,6 +20,14 @@
       "request": "launch",
       "type": "dart",
       "flutterMode": "release"
+    },
+    {
+      "name": "Eleu Tester",
+      "request": "launch",
+      "type": "dart",
+      "program": "test/eleu_tester.dart",
+      
+
     }
   ]
 }

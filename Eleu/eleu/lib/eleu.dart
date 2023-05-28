@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'ast/ast_parser.dart';
 import 'ast/ast_stmt.dart';
 import 'interpret/interpreter.dart';
 import 'native.dart';
 import 'scanning.dart';
+import 'types.dart';
 
 enum FunctionType { FunTypeFunction, FunTypeInitializer, FunTypeMethod, FunTypeScript }
 
@@ -42,12 +45,32 @@ EEleuResult CompileAndRunAst(String source, String fileName, EleuOptions options
   return (presult, interpreter);
 }
 
+bool RunFile(string path, TextWriter tw) {
+  var opt = EleuOptions();
+  opt.Out = opt.Err = tw;
+  var source = File(path).readAsStringSync();
+  var result = CompileAndRunAst(source, path, opt);
+  return result == EEleuResult.Ok;
+}
+
 class TextWriter {
   void WriteLine(String msg) {
     print(msg);
   }
 
   static final TextWriter Null = TextWriter();
+}
+
+class StringWriter extends TextWriter {
+  final StringBuffer _buffer = StringBuffer();
+
+  @override
+  void WriteLine(String msg) {
+    _buffer.writeln(msg);
+  }
+
+  @override
+  String toString() => _buffer.toString();
 }
 
 class EleuOptions {
