@@ -6,6 +6,7 @@ import '../eleu.dart';
 import '../scanning.dart';
 import '../types.dart';
 import 'interpreting.dart';
+import 'resolver.dart';
 
 class Stack<E> {
   final _list = <E>[];
@@ -18,6 +19,7 @@ class Stack<E> {
 
   bool get isEmpty => _list.isEmpty;
   bool get isNotEmpty => _list.isNotEmpty;
+  int get length => _list.length;
 
   @override
   String toString() => _list.toString();
@@ -35,6 +37,8 @@ class Interpreter extends IInterpreter
   Stack<CallStackInfo> callStack = Stack();
   final List<Token> orgTokens;
   int MaxStackDepth = 200;
+
+  int ExecutedInstructionCount = 0;
 
   Interpreter(EleuOptions options, this.statements, this.orgTokens) : super(options) {
     this.environment = globals;
@@ -57,36 +61,77 @@ class Interpreter extends IInterpreter
 
   @override
   EEleuResult Interpret() {
-		Execute = ExecuteRelease;
-		return DoInterpret();
+    Execute = ExecuteRelease;
+    return DoInterpret();
   }
-	EEleuResult DoInterpret()
+
+  EEleuResult DoInterpret() {
+    EEleuResult result = EEleuResult.Ok;
+    try {
+      locals = Map.identity();
+      callStack = Stack();
+      Resolve();
+      ExecutedInstructionCount = 0;
+      for (var stmt in this.statements) {
+        Execute(stmt);
+      }
+    } on EleuRuntimeError catch (ex) {
+      if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
+      var stat = ex.Status ?? currentStatus;
+      var msg = "${stat.Message}: ${ex.Message}";
+      options.Err.WriteLine(msg);
+      print(msg);
+      result = EEleuResult.RuntimeError;
+    }
+    return result;
+  }
+
+  void Resolve() {
+    var resolver = Resolver(this);
+    resolver.ResolveList(this.statements);
+  }
+
+  void resolveLocal(Expr expr, int depth) {
+    locals[expr] = depth;
+  }
+	
+  InterpretResult ExecuteBlock(List<Stmt> statements, EleuEnvironment environment)
 	{
-		EEleuResult result = EEleuResult.Ok;
+		var previous = this.environment;
+		InterpretResult result = InterpretResult.NilResult;
 		try
 		{
-			locals = Map.identity();
-			callStack = Stack();
-			//TODO var resolver = Resolver(this);
-			// resolver.Resolve(this.statements);
-			// resolver = null;
-			// ExecutedInstructionCount = 0;
-			// for (var stmt in this.statements)
-			// {
-			// 	Execute(stmt);
-			// }
+			this.environment = environment;
+			for (Stmt statement in statements)
+			{
+				result = Execute(statement);
+				if (result.Stat != InterpretStatus.Normal)
+					break;
+			}
+			return result;
 		}
-		on EleuRuntimeError catch (ex)
+		finally
 		{
-			if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
-			var stat = ex.Status ?? currentStatus;
-			var msg = "${stat.Message}: {ex.Message}";
-			options.Err.WriteLine(msg);
-			print(msg);
-			result = EEleuResult.RuntimeError;
+			this.environment = previous;
 		}
-		return result;
 	}
+  Object Evaluate(Expr expr) {
+    ExecutedInstructionCount++;
+    RegisterStatus(expr.Status);
+    var evaluated = expr.Accept(this);
+    return evaluated;
+  }
+
+  void RegisterStatus(InputStatus? status) {
+    if (status != null) {
+      currentStatus = status;
+    }
+  }
+
+  EleuRuntimeError Error(String message) {
+    return EleuRuntimeError(currentStatus, message);
+  }
+
   @override
   InterpretResult VisitAssertStmt(AssertStmt stmt) {
     // TODO: implement VisitAssertStmt
@@ -95,14 +140,46 @@ class Interpreter extends IInterpreter
 
   @override
   Object VisitAssignExpr(AssignExpr expr) {
-    // TODO: implement VisitAssignExpr
-    throw UnimplementedError();
+    var value = Evaluate(expr.Value);
+    var distance = locals[expr];
+    if (distance != null) {
+      environment.AssignAt(distance, expr.Name, value);
+    } else {
+      globals.Assign(expr.Name, value);
+    }
+    return value;
   }
 
   @override
   Object VisitBinaryExpr(BinaryExpr expr) {
-    // TODO: implement VisitBinaryExpr
-    throw UnimplementedError();
+    var lhs = Evaluate(expr.Left);
+    var rhs = Evaluate(expr.Right);
+    switch (expr.Op.Type) {
+      case TokenType.TokenBangEqual:
+        return !ObjEquals(lhs, rhs);
+      case TokenType.TokenEqualEqual:
+        return ObjEquals(lhs, rhs);
+      case TokenType.TokenGreater:
+        return InternalCompare(lhs, rhs) > 0;
+      case TokenType.TokenGreaterEqual:
+        return InternalCompare(lhs, rhs) >= 0;
+      case TokenType.TokenLess:
+        return InternalCompare(lhs, rhs) < 0;
+      case TokenType.TokenLessEqual:
+        return InternalCompare(lhs, rhs) <= 0;
+      case TokenType.TokenPlus:
+        return NumStrAdd(lhs, rhs);
+      case TokenType.TokenMinus:
+        return NumSubtract(lhs, rhs);
+      case TokenType.TokenStar:
+        return NumberOp("*", lhs, rhs, (a, b) => a * b);
+      case TokenType.TokenPercent:
+        return NumberOp("%", lhs, rhs, (a, b) => a % b);
+      case TokenType.TokenSlash:
+        return NumberOp("/", lhs, rhs, (a, b) => a / b);
+      default:
+        throw Error("Invalid op: ${expr.Op.Type}");
+    }
   }
 
   @override
@@ -119,8 +196,30 @@ class Interpreter extends IInterpreter
 
   @override
   Object VisitCallExpr(CallExpr expr) {
-    // TODO: implement VisitCallExpr
-    throw UnimplementedError();
+    var callee = Evaluate(expr.Callee);
+    if (callee is! ICallable) {
+      RuntimeError("Can only call functions and classes.");
+      return expr;
+    }
+    var function = callee;
+    if (function is! NativeFunction && expr.Arguments.length != function.Arity)
+      RuntimeError(
+          "Expected ${function.Arity} arguments but got ${expr.Arguments.length}.");
+    if (callStack.length >= MaxStackDepth)
+      RuntimeError("Zu viele verschachtelte Funktionsaufrufe.");
+    var arguments = <Object>[];
+    for (int i = 0; i < expr.Arguments.length; i++) {
+      var argument = expr.Arguments[i];
+      arguments.add(Evaluate(argument));
+    }
+    try {
+      var csi = CallStackInfo(this, function, environment);
+      callStack.push(csi);
+      //Trace.Write($"{callStack.Count} ");		if (callStack.Count % 100 == 0) Trace.WriteLine("");
+      return function.Call(this, arguments);
+    } finally {
+      callStack.pop();
+    }
   }
 
   @override
@@ -143,8 +242,12 @@ class Interpreter extends IInterpreter
 
   @override
   Object VisitGetExpr(GetExpr expr) {
-    // TODO: implement VisitGetExpr
-    throw UnimplementedError();
+		var obj = Evaluate(expr.Obj);
+		if (obj is EleuInstance )
+		{
+			return obj.Get(expr.Name);
+		}
+		throw Error("Only instances have properties.");
   }
 
   @override

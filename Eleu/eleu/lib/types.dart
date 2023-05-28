@@ -1,6 +1,15 @@
+// ignore_for_file: camel_case_types
+
 import 'dart:collection';
+import 'package:eleu/ast/ast_stmt.dart';
+
 import 'eleu.dart';
 import 'interpret/interpreter.dart';
+import 'interpret/interpreting.dart';
+
+typedef OList = List<Object>;
+typedef object = Object;
+typedef string = String;
 
 const Object NilValue = Object();
 
@@ -83,4 +92,98 @@ class NativeFunction implements ICallable {
 
   @override
   String toString() => "<native function>";
+}
+
+class EleuFunction implements ICallable {
+  final FunctionStmt declaration;
+  final EleuEnvironment closure;
+  final bool isInitializer;
+  EleuFunction(this.declaration, this.closure, this.isInitializer);
+
+  @override
+  int get Arity => declaration.Paras.length;
+  @override
+  String get Name => declaration.Name;
+
+  @override
+  Object Call(Interpreter interpreter, List<Object> arguments) {
+    var environment = EleuEnvironment(closure);
+    for (int i = 0; i < declaration.Paras.length; i++) {
+      environment.Define(declaration.Paras[i].StringValue, arguments[i]);
+    }
+    var retVal = interpreter.ExecuteBlock(declaration.Body, environment).Value;
+    if (isInitializer) return closure.GetAt("this", 0);
+    return retVal;
+  }
+
+  @override
+  String toString() => "<function ${declaration.Name}>";
+
+  EleuFunction bind(EleuInstance instance) {
+    var environment = EleuEnvironment(closure);
+    environment.Define("this", instance);
+    return EleuFunction(declaration, environment, isInitializer);
+  }
+}
+
+class EleuClass implements ICallable {
+  final String _name;
+  @override
+  String get Name => _name;
+
+  OTable Methods = OTable();
+  EleuClass? Superclass;
+  EleuClass(this._name, this.Superclass);
+
+  @override
+  int get Arity {
+    var initializer = FindMethod("init");
+    if (initializer is! EleuFunction) return 0;
+    return initializer.Arity;
+  }
+
+  @override
+  Object Call(Interpreter interpreter, OList arguments) {
+    var instance = EleuInstance(this);
+    var initializer = FindMethod("init");
+    if (initializer is EleuFunction) {
+      initializer.bind(instance).Call(interpreter, arguments);
+    }
+    return instance;
+  }
+
+  Object FindMethod(String name) {
+    var mth = Methods.Get(name);
+    if (mth != NilValue) return mth;
+    if (Superclass != null) {
+      return Superclass!.FindMethod(name);
+    }
+    return NilValue;
+  }
+
+  @override
+  String toString() => Name;
+}
+
+class EleuInstance {
+  final EleuClass klass;
+  final OTable fields = OTable();
+
+  EleuInstance(this.klass);
+
+  object Get(string name) {
+    var val = fields.Get(name);
+    if (val == NilValue) {
+      var method = klass.FindMethod(name);
+      if (method == NilValue) throw EleuRuntimeError(null, "Undefined property '$name'.");
+      var func = method as EleuFunction;
+      return func.bind(this);
+    }
+    return val;
+  }
+
+  void Set(string name, object value) => fields.Set(name, value);
+
+  @override
+  string toString() => "${klass.Name} instance";
 }
