@@ -128,13 +128,15 @@ ${expected}''';
     testDirLen = dir.length;
     printInfo("Start Testing dir: ${dir}");
     var watch = Stopwatch();
+    watch.start();
     RunActionInDir(dir, TestFile);
+    watch.stop();
 
     print("");
     printInfo("---- Test Results ---");
     //var f=NumberFormat("###0");
     printWarning("Skipped: ${nSkipped}");
-    printInfo("Tests  : ${nTests} in ${watch.elapsedMicroseconds} ms");
+    printInfo("Tests  : ${nTests} in ${watch.elapsedMilliseconds} ms");
     printSuccess("Success: ${nSuccess}");
     if (nFail > 0) printError("Fail   : ${nFail}");
   }

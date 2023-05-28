@@ -70,7 +70,7 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
   Object? Resolve(Object? o) {
     if (o is Expr) return ResolveExpr(o);
     if (o is Stmt) return ResolveStmt(o);
-    // throw EleuResolverError(interpreter.currentStatus, "null resolving");
+    return null;
   }
 
   void Declare(String name) {

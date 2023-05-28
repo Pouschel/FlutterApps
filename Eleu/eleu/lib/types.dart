@@ -36,7 +36,7 @@ class Number {
   // internal Number(long l) { this.DVal = l; }
   // public bool IsDefined => double.IsFinite(DVal);
   // public bool IsZero => DVal == 0;
-  int get IntValue => (DVal).round();
+  int get IntValue => DVal.floor();
   bool get IsInt => IntValue == DVal;
   @override
   String toString() {
