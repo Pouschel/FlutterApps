@@ -1,5 +1,8 @@
 // ignore_for_file: file_names
+import 'dart:math';
+
 import 'eleu.dart';
+import 'interpret/interpreting.dart';
 import 'types.dart';
 
 class EleuNativeError extends EleuRuntimeError {
@@ -10,7 +13,11 @@ class NativeFunctionBase {
   IInterpreter? vm;
   IInterpreter get Vm => vm!;
 
-  static void CheckArgLen(List<Object> args, int nMinArgs, int nMaxArgs, String name) {
+  static void CheckArgLen(List<Object> args, int nMinArgs, String name) =>
+      CheckArgLenMulti(args, nMinArgs, -1, name);
+
+  static void CheckArgLenMulti(
+      List<Object> args, int nMinArgs, int nMaxArgs, String name) {
     if (name[0] == '@') name = name.substring(1);
     if (nMaxArgs < 0) if (args.length != nMinArgs)
       throw EleuNativeError(
@@ -27,8 +34,10 @@ class NativeFunctionBase {
       var arg = args[zeroIndex];
       if (arg is T) return arg as T;
       String tn = "";
-      if (arg is Number) tn = "number";
-      else if (arg is String) tn = "string";
+      if (arg is Number)
+        tn = "number";
+      else if (arg is String)
+        tn = "string";
       else if (arg is bool) tn = "boolean";
       throw EleuNativeError(
           "In der Funktion ${funcName} muss das ${zeroIndex + 1}. Argument vom Typ '${tn}' sein!");
@@ -74,4 +83,42 @@ class NativeFunctionBase {
   // 			vm.DefineNative(name, (NativeFn)Delegate.CreateDelegate(typeof(NativeFn), funcClass, method));
   // 	}
   // }
+}
+
+class NativeFunctions extends NativeFunctionBase {
+  Random rand = Random();
+
+  late Map funcMap = {"toString": _toString, "print": print};
+
+  NativeFunctions() {
+    //funcMap = {"toString": _toString};
+  }
+
+  Object _toString(String name, List<Object> args) {
+    NativeFunctionBase.CheckArgLen(args, 1, name);
+    return Stringify(args[0]);
+  }
+
+  Object print(String name, List<Object> args) {
+    NativeFunctionBase.CheckArgLen(args, 1, name);
+    var s = Stringify(args[0]);
+    Vm.options.Out.WriteLine(s);
+    return NilValue;
+  }
+
+  static void DefineAll(IInterpreter vm) {
+    var funcClass = NativeFunctions();
+    funcClass.vm = vm;
+    funcClass.funcMap.forEach((name, value) {
+      vm.DefineNative(name, (p0) => value(name, p0));
+    });
+
+    // for (var (name, method) in funcClass.GetFunctions())
+    // {
+    // 	if (method.IsStatic)
+    // 		vm.DefineNative(name, (NativeFn)Delegate.CreateDelegate(typeof(NativeFn), method));
+    // 	else
+    // 		vm.DefineNative(name, (NativeFn)Delegate.CreateDelegate(typeof(NativeFn), funcClass, method));
+    // }
+  }
 }

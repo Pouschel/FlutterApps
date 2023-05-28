@@ -89,7 +89,7 @@ class CodeEditorState extends State<CodeEditor> {
     var opt = EleuOptions();
     opt.Out = opt.Err = UpdateWriter(this);
     infoText = "";
-    Globals.ScanAndParse(_codeController.text, "", opt);
+    ScanAndParse(_codeController.text, "", opt);
   }
 
   @override

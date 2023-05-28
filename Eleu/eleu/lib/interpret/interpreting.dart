@@ -3,8 +3,6 @@ import '../eleu.dart';
 import '../types.dart';
 import 'interpreter.dart';
 
-
-
 String Stringify(Object val) => StringifyString(val, false);
 
 String StringifyString(Object val, bool quotationMarks) {

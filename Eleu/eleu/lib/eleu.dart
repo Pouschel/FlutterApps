@@ -1,10 +1,26 @@
 import 'ast/ast_parser.dart';
 import 'ast/ast_stmt.dart';
+import 'native.dart';
 import 'scanning.dart';
 
 enum FunctionType { FunTypeFunction, FunTypeInitializer, FunTypeMethod, FunTypeScript }
 
 enum EEleuResult { Ok, CompileError, CodeGenError, RuntimeError, NextStep }
+
+List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options) {
+  var scanner = Scanner(source, fileName);
+  var tokens = scanner.ScanAllTokens();
+  for (var tok in tokens) {
+    options.Out.WriteLine(tok.toString());
+  }
+
+  var parser = AstParser(options, fileName, tokens);
+  var parseResult = parser.Parse();
+  for (var stmt in parseResult) {
+    options.Out.WriteLine(stmt.toString());
+  }
+  return parseResult;
+}
 
 class TextWriter {
   void WriteLine(String msg) {
@@ -56,23 +72,6 @@ class EleuAssertionFail extends EleuRuntimeError {
   EleuAssertionFail(InputStatus? status, String msg) : super(status, msg);
 }
 
-class Globals {
-  static List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options) {
-    var scanner = Scanner(source, fileName);
-    var tokens = scanner.ScanAllTokens();
-    for (var tok in tokens) {
-      options.Out.WriteLine(tok.toString());
-    }
-
-    var parser = AstParser(options, fileName, tokens);
-    var parseResult = parser.Parse();
-    for (var stmt in parseResult) {
-      options.Out.WriteLine(stmt.toString());
-    }
-    return parseResult;
-  }
-}
-
 typedef NativeFn = Object Function(List<Object>);
 
 abstract class IInterpreter {
@@ -84,8 +83,8 @@ abstract class IInterpreter {
   int InstructionCount = 0;
   IInterpreter(this.options) {
     this.options = options;
-    // NativeFunctionBase.DefineAll<NativeFunctions>(this);
-    // NativeFunctionBase.DefineAll<PuzzleFunctions>(this);
+    NativeFunctions.DefineAll(this);
+    //TODO NativeFunctionBase.DefineAll<PuzzleFunctions>(this);
   }
   EEleuResult Interpret();
   void RuntimeError(String msg);

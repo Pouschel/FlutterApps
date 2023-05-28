@@ -53,7 +53,7 @@ class Interpreter extends IInterpreter
 
   @override
   void DefineNative(String name, NativeFn function) {
-    var ofun = NativeFunction(name, function);
+    var ofun = NativeFunction(name,  function);
     globals.Define(name, ofun);
   }
 
