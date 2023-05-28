@@ -71,7 +71,7 @@ class NativeFunction implements ICallable {
   NativeFunction(this.name, this.function);
 
   @override
-  int get Arity => -1; //todo function.Method.GetParameters().Length - 1;
+  int get Arity => -1; //TODO function.Method.GetParameters().Length - 1;
 
   @override
   String get Name => name;
