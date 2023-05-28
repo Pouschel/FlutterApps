@@ -349,7 +349,8 @@ class Interpreter extends IInterpreter
 			return count.IntValue;
 		}
 		var count = GetCount();
-		if (count is! int) throw EleuRuntimeError(stmt.Count.Status, "Es wird eine natürliche Zahl erwartet.");
+		if (count is! int) 
+      throw EleuRuntimeError(stmt.Count.Status, "Es wird eine natürliche Zahl erwartet.");
 
 		for (int i = 0; i < count; i++)
 		{

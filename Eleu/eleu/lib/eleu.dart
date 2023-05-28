@@ -85,7 +85,7 @@ class EleuOptions {
   void WriteCompilerError(InputStatus status, String message) {
     var msg = "${status.Message}: Cerr: ${message}";
     Err.WriteLine(msg);
-    print(msg);
+    //print(msg);
   }
 }
 

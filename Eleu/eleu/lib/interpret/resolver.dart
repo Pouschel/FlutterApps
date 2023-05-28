@@ -70,7 +70,7 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
   Object? Resolve(Object? o) {
     if (o is Expr) return ResolveExpr(o);
     if (o is Stmt) return ResolveStmt(o);
-   // throw EleuResolverError(interpreter.currentStatus, "null resolving");
+    // throw EleuResolverError(interpreter.currentStatus, "null resolving");
   }
 
   void Declare(String name) {
@@ -280,7 +280,8 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
     var scope = Peek();
     //scope != null && scope.TryGetValue(expr.Name, out bool b) && !b
     if (scope != null) {
-      if (scope[expr.Name] ?? false)
+      var b = scope[expr.Name];
+      if (b != null && !b)
         Error(expr.Status, "Can't read local variable in its own initializer.");
     }
     ResolveLocal(expr, expr.Name);

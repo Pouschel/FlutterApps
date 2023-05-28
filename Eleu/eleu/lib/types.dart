@@ -2,6 +2,7 @@
 
 import 'dart:collection';
 import 'package:eleu/ast/ast_stmt.dart';
+import 'package:intl/intl.dart';
 
 import 'eleu.dart';
 import 'interpret/interpreter.dart';
@@ -35,10 +36,14 @@ class Number {
   // internal Number(long l) { this.DVal = l; }
   // public bool IsDefined => double.IsFinite(DVal);
   // public bool IsZero => DVal == 0;
-  int get IntValue => (DVal - 0.5).round();
+  int get IntValue => (DVal).round();
   bool get IsInt => IntValue == DVal;
   @override
-  String toString() => DVal.toString();
+  String toString() {
+    var f = IsInt ? NumberFormat("0","en_US"): NumberFormat("###.0#", "en_US");
+    return f.format(DVal);
+  }
+
   @override
   bool operator ==(Object other) {
     if (other is Number) DVal == other.DVal;

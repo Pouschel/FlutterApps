@@ -37,7 +37,7 @@ class AstParser {
   void Declaration(List<Stmt> statements) {
     try {
       if (Match(TokenType.TokenVar)) statements.add(VarDeclaration());
-      if (Match(TokenType.TokenFun))
+      else if (Match(TokenType.TokenFun))
         statements.add(Function(FunctionType.FunTypeFunction));
       else if (Match(TokenType.TokenClass))
         statements.add(ClassDeclaration());

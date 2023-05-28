@@ -22,10 +22,10 @@ class EleuTester {
         nSuccess++;
         return;
       }
-      if (expected.isEmpty) {
-        nSkipped++;
-        return;
-      }
+      // if (expected.isEmpty) {
+      //   nSkipped++;
+      //   return;
+      // }
       msg = '''"..........got.......
 ${res}
 .......expected.........
@@ -94,7 +94,7 @@ ${expected}''';
     return sw.toString();
   }
 
- void RunActionInDir(string dir, void Function(string) action)  {
+  void RunActionInDir(string dir, void Function(string) action) {
     var diro = Directory(dir);
     string locDir = GetFileName(dir);
     if (locDir[0] == '-') return;
@@ -103,6 +103,8 @@ ${expected}''';
     final Iterable<File> files = entities.whereType<File>();
     for (var file in files) {
       var fn = file.absolute.path;
+      var ext = fn.split('.').last;
+      if (ext.toLowerCase() != "eleu") continue;
       if (IsIgnored(fn)) continue;
       action(fn);
     }
@@ -113,7 +115,7 @@ ${expected}''';
   }
 
   bool IsIgnored(string file) {
-    print("\r${file.substring(testDirLen)}           ");
+    //print("\r${file.substring(testDirLen)}           ");
     var baseName = GetFileName(file);
     if (baseName[0] == '-') {
       nSkipped++;
@@ -122,7 +124,7 @@ ${expected}''';
     return false;
   }
 
-  RunTests(string dir)  {
+  RunTests(string dir) {
     testDirLen = dir.length;
     printInfo("Start Testing dir: ${dir}");
     var watch = Stopwatch();
@@ -160,9 +162,9 @@ void printSuccess(String text) {
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/variable/unreached_undefined.eleu";
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/statements/repeat/repeats.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);
-  etest.TestFile(fn);
+  RunFile(fn, tw);
 }
