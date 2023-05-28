@@ -94,32 +94,36 @@ class Interpreter extends IInterpreter
   void resolveLocal(Expr expr, int depth) {
     locals[expr] = depth;
   }
-	
-  InterpretResult ExecuteBlock(List<Stmt> statements, EleuEnvironment environment)
-	{
-		var previous = this.environment;
-		InterpretResult result = InterpretResult.NilResult;
-		try
-		{
-			this.environment = environment;
-			for (Stmt statement in statements)
-			{
-				result = Execute(statement);
-				if (result.Stat != InterpretStatus.Normal)
-					break;
-			}
-			return result;
-		}
-		finally
-		{
-			this.environment = previous;
-		}
-	}
+
+  InterpretResult ExecuteBlock(List<Stmt> statements, EleuEnvironment environment) {
+    var previous = this.environment;
+    InterpretResult result = InterpretResult.NilResult;
+    try {
+      this.environment = environment;
+      for (Stmt statement in statements) {
+        result = Execute(statement);
+        if (result.Stat != InterpretStatus.Normal) break;
+      }
+      return result;
+    } finally {
+      this.environment = previous;
+    }
+  }
+
   Object Evaluate(Expr expr) {
     ExecutedInstructionCount++;
     RegisterStatus(expr.Status);
     var evaluated = expr.Accept(this);
     return evaluated;
+  }
+
+  object LookUpVariable(string name, Expr expr) {
+    var distance = locals[expr];
+    if (distance != null) {
+      return environment.GetAt(name, distance);
+    } else {
+      return globals.Lookup(name);
+    }
   }
 
   void RegisterStatus(InputStatus? status) {
@@ -134,8 +138,24 @@ class Interpreter extends IInterpreter
 
   @override
   InterpretResult VisitAssertStmt(AssertStmt stmt) {
-    // TODO: implement VisitAssertStmt
-    throw UnimplementedError();
+    bool fail = false;
+    try {
+      var val = Evaluate(stmt.expression);
+      if (IsFalsey(val)) fail = true;
+    } on EleuRuntimeError catch (ex) {
+      if (stmt.isErrorAssert) {
+        if (stmt.message == null || stmt.message == ex.Message)
+          return InterpretResult.NilResult;
+      }
+      rethrow;
+    }
+    var msg = stmt.message ?? "Eine Annahme ist fehlgeschlagen.";
+    if (stmt.isErrorAssert) {
+      fail = true;
+      msg += " Es wurde eine RuntimeException erwartet!";
+    }
+    if (fail) throw EleuAssertionFail(stmt.expression.Status, msg);
+    return InterpretResult.NilResult;
   }
 
   @override
@@ -183,15 +203,12 @@ class Interpreter extends IInterpreter
   }
 
   @override
-  InterpretResult VisitBlockStmt(BlockStmt stmt) {
-    // TODO: implement VisitBlockStmt
-    throw UnimplementedError();
-  }
+  InterpretResult VisitBlockStmt(BlockStmt stmt) =>
+      ExecuteBlock(stmt.Statements, EleuEnvironment(environment));
 
   @override
   InterpretResult VisitBreakContinueStmt(BreakContinueStmt stmt) {
-    // TODO: implement VisitBreakContinueStmt
-    throw UnimplementedError();
+	return stmt.IsBreak ? InterpretResult.BreakResult : InterpretResult.ContinueResult;
   }
 
   @override
@@ -224,107 +241,216 @@ class Interpreter extends IInterpreter
 
   @override
   InterpretResult VisitClassStmt(ClassStmt stmt) {
-    // TODO: implement VisitClassStmt
-    throw UnimplementedError();
+    EleuClass? superclass;
+    if (stmt.Superclass != null) {
+      var superclassV = Evaluate(stmt.Superclass!);
+      if (superclassV is! EleuClass) {
+        throw Error("Superclass must be a class.");
+      }
+      superclass = superclassV;
+    }
+    var klass = environment.GetAtDistance0(stmt.Name);
+    if (klass is! EleuClass) {
+      environment.Define(stmt.Name, NilValue);
+      klass = EleuClass(stmt.Name, superclass);
+    } else {
+      if (klass.Superclass != null && klass.Superclass != superclass)
+        throw EleuRuntimeError(stmt.Status,
+            "Super class must be the same (${klass.Superclass?.Name} vs. ${superclass?.Name})");
+    }
+    if (superclass != null) {
+      environment = EleuEnvironment(environment);
+      environment.Define("super", superclass);
+    }
+
+    //klass = new EleuClass(stmt.Name, superclass);
+    for (FunctionStmt method in stmt.Methods) {
+      EleuFunction function = EleuFunction(method, environment, method.Name == "init");
+      klass.Methods.Set(method.Name, function);
+    }
+    var kval = klass;
+    if (superclass != null) {
+      environment = environment.enclosing!;
+    }
+    environment.Assign(stmt.Name, kval);
+    return InterpretResult(kval, InterpretStatus.Normal);
   }
 
   @override
   InterpretResult VisitExpressionStmt(ExpressionStmt stmt) {
-    // TODO: implement VisitExpressionStmt
-    throw UnimplementedError();
+    var evRes = Evaluate(stmt.expression);
+    if (evRes is ICallable && stmt.expression is VariableExpr)
+      throw Error("Die Funktion '${evRes.Name}' muss mit () aufgerufen werden");
+    return InterpretResult(evRes, InterpretStatus.Normal);
   }
 
   @override
   InterpretResult VisitFunctionStmt(FunctionStmt stmt) {
-    // TODO: implement VisitFunctionStmt
-    throw UnimplementedError();
+    EleuFunction function = EleuFunction(stmt, environment, false);
+    environment.Define(stmt.Name, function);
+    return InterpretResult(function, InterpretStatus.Normal);
   }
 
   @override
   Object VisitGetExpr(GetExpr expr) {
-		var obj = Evaluate(expr.Obj);
-		if (obj is EleuInstance )
-		{
-			return obj.Get(expr.Name);
-		}
-		throw Error("Only instances have properties.");
+    var obj = Evaluate(expr.Obj);
+    if (obj is EleuInstance) {
+      return obj.Get(expr.Name);
+    }
+    throw Error("Only instances have properties.");
   }
 
   @override
-  Object VisitGroupingExpr(GroupingExpr expr) {
-    // TODO: implement VisitGroupingExpr
-    throw UnimplementedError();
-  }
+  Object VisitGroupingExpr(GroupingExpr expr) => Evaluate(expr.Expression);
 
   @override
   InterpretResult VisitIfStmt(IfStmt stmt) {
-    // TODO: implement VisitIfStmt
-    throw UnimplementedError();
+    var cond = Evaluate(stmt.Condition);
+    if (cond is! bool)
+      throw Error("Die if-Bedingung '${cond}' ist nicht vom Typ boolean");
+    if (IsTruthy(cond))
+      return Execute(stmt.ThenBranch);
+    else if (stmt.ElseBranch != null) return Execute(stmt.ElseBranch!);
+    return InterpretResult.NilResult;
   }
 
   @override
   Object VisitLiteralExpr(LiteralExpr expr) {
-    // TODO: implement VisitLiteralExpr
-    throw UnimplementedError();
+    if (expr.Value == null) return NilValue;
+    return expr.Value!;
   }
 
   @override
   Object VisitLogicalExpr(LogicalExpr expr) {
-    // TODO: implement VisitLogicalExpr
-    throw UnimplementedError();
+    var left = Evaluate(expr.Left);
+    if (left is! bool)
+      throw Error(
+          "Der Operator '${expr.Op.StringValue}' kann nicht auf '${left}' angewendet werden.");
+    var right = Evaluate(expr.Right);
+    if (right is! bool)
+      throw Error(
+          "Der Operator '${expr.Op.StringValue}' kann nicht auf '${right}' angewendet werden.");
+    if (expr.Op.Type == TokenType.TokenOr) {
+      if (IsTruthy(left)) return left;
+    } else {
+      if (IsFalsey(left)) return left;
+    }
+    return right;
   }
 
   @override
   InterpretResult VisitRepeatStmt(RepeatStmt stmt) {
-    // TODO: implement VisitRepeatStmt
-    throw UnimplementedError();
+		var result = InterpretResult.NilResult;
+		int? GetCount()
+		{
+			var count = Evaluate(stmt.Count);
+			if (count is! Number ) return null;
+			if (!count.IsInt) return null;
+			return count.IntValue;
+		}
+		var count = GetCount();
+		if (count is! int) throw EleuRuntimeError(stmt.Count.Status, "Es wird eine natürliche Zahl erwartet.");
+
+		for (int i = 0; i < count; i++)
+		{
+			result = Execute(stmt.Body);
+			if (result.Stat == InterpretStatus.Continue)
+			{
+				continue;
+			}
+			if (result.Stat == InterpretStatus.Break)
+			{
+				result = InterpretResult.NilResult;
+				break;
+			}
+			if (result.Stat != InterpretStatus.Normal)
+				break;
+		}
+		return result;
   }
 
   @override
   InterpretResult VisitReturnStmt(ReturnStmt stmt) {
-    // TODO: implement VisitReturnStmt
-    throw UnimplementedError();
+    var val = NilValue;
+    if (stmt.Value != null) val = Evaluate(stmt.Value!);
+    return InterpretResult(val, InterpretStatus.Return);
   }
 
   @override
   Object VisitSetExpr(SetExpr expr) {
-    // TODO: implement VisitSetExpr
-    throw UnimplementedError();
+    var obj = Evaluate(expr.Obj);
+    if (obj is! EleuInstance) {
+      throw Error("Only instances have fields.");
+    }
+    var value = Evaluate(expr.Value);
+    obj.Set(expr.Name, value);
+    return value;
   }
 
   @override
   Object VisitSuperExpr(SuperExpr expr) {
-    // TODO: implement VisitSuperExpr
-    throw UnimplementedError();
+    int distance = locals[expr] ?? 0;
+    EleuClass superclass = environment.GetAt("super", distance) as EleuClass;
+    EleuInstance obj = environment.GetAt("this", distance - 1) as EleuInstance;
+    EleuFunction? method = superclass.FindMethod(expr.Method) as EleuFunction;
+    if (method == NilValue) {
+      throw Error("Undefined property '${expr.Method}'.");
+    }
+    return method.bind(obj);
   }
 
   @override
   Object VisitThisExpr(ThisExpr expr) {
-    // TODO: implement VisitThisExpr
-    throw UnimplementedError();
+    return LookUpVariable(expr.Keyword, expr);
   }
 
   @override
   Object VisitUnaryExpr(UnaryExpr expr) {
-    // TODO: implement VisitUnaryExpr
-    throw UnimplementedError();
+    var right = Evaluate(expr.Right);
+    switch (expr.Op.Type) {
+      case TokenType.TokenBang:
+        if (right is! bool) throw Error("Operand muss vom Typ boolean sein.");
+        return !IsTruthy(right);
+      case TokenType.TokenMinus:
+        {
+          if (right is! Number) throw Error("Operand muss eine Zahl sein.");
+          return -right;
+        }
+      default:
+        throw Error("Unknown op type: ${expr.Op.Type}"); // Unreachable.
+    }
   }
 
   @override
   InterpretResult VisitVarStmt(VarStmt stmt) {
-    // TODO: implement VisitVarStmt
-    throw UnimplementedError();
+    var value = NilValue;
+    if (stmt.Initializer != null) {
+      value = Evaluate(stmt.Initializer!);
+    }
+    if (environment.ContainsAtDistance0(stmt.Name))
+      throw Error("Mehrfache var-Anweisung: '${stmt.Name}' wurde bereits deklariert!");
+    environment.Define(stmt.Name, value);
+    return InterpretResult(value, InterpretStatus.Normal);
   }
 
   @override
-  Object VisitVariableExpr(VariableExpr expr) {
-    // TODO: implement VisitVariableExpr
-    throw UnimplementedError();
-  }
+  Object VisitVariableExpr(VariableExpr expr) => LookUpVariable(expr.Name, expr);
 
   @override
   InterpretResult VisitWhileStmt(WhileStmt stmt) {
-    // TODO: implement VisitWhileStmt
-    throw UnimplementedError();
+    var result = InterpretResult.NilResult;
+    while (IsTruthy(Evaluate(stmt.Condition))) {
+      result = Execute(stmt.Body);
+      if (result.Stat == InterpretStatus.Continue) {
+        if (stmt.Increment != null) Evaluate(stmt.Increment!);
+        continue;
+      }
+      if (result.Stat == InterpretStatus.Break) {
+        result = InterpretResult.NilResult;
+        break;
+      }
+      if (result.Stat != InterpretStatus.Normal) break;
+    }
+    return result;
   }
 }

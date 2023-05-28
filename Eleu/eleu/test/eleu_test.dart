@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:eleu/eleu.dart';
 import 'package:eleu/interpret/interpreter.dart';
