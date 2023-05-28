@@ -1,7 +1,9 @@
-import 'dart:math';
 import 'dart:convert';
+import 'dart:math';
 import 'package:archive/archive.dart';
 
+import '../eleu.dart';
+import '../scanning.dart';
 import '../types.dart';
 
 enum ShapeColors {
@@ -67,7 +69,7 @@ class FieldState {
   string toString() {
     var sb = StringBuffer();
     if (Object != FieldObjects.None) sb.write(Object);
-    if (SVal != null) {
+    if (SVal.isNotEmpty) {
       if (sb.length > 0) sb.write(", ");
       sb.write(SVal);
     }
@@ -163,44 +165,92 @@ string DecompressBase64(string s) {
 
 const string EncodingStart = ">:)";
 
-	// string EncodePuzzle(string text)
-	// {
-	// 	var s = FileUtils.CompressBase64(text);
-	// 	const int split = 44;
-	// 	var sb = StringBuffer();
-	// 	s = EncodingStart + s;
-	// 	while (s.Length > 0)
-	// 	{
-	// 		var n = min(split, s.Length);
-	// 		sb.write(s[..n]);
-	// 		s = s[n..];
-	// 		while (s.StartsWith('+'))
-	// 		{
-	// 			sb.Append('+');
-	// 			s = s[1..];
-	// 		}
-	// 		sb.AppendLine();
-	// 	}
-	// 	return sb.ToString();
-	// }
+string EncodePuzzle(string text) {
+  var s = CompressBase64(text);
+  const int split = 44;
+  var sb = StringBuffer();
+  s = EncodingStart + s;
+  while (s.isNotEmpty) {
+    var n = min(split, s.length);
+    sb.write(s.substring(0, n));
+    s = s.substring(n);
+    // avoid markdown problems showing the puzzles
+    while (s.startsWith('+')) {
+      sb.write('+');
+      s = s.substring(1);
+    }
+    sb.writeln();
+  }
+  return sb.toString();
+}
 
-	string getRawPuzzleCode(string code)
-  {
-		code = code.trim();
-		if (code.startsWith(EncodingStart))
-		{
-			code = code.substring(EncodingStart.length);
-			code = code.replaceAll("\r", "");
-			code = code.replaceAll("\n", "");
-			code = code.trim();
-			code = DecompressBase64(code);
-		}
-    return code;
+string getRawPuzzleCode(string code) {
+  code = code.trim();
+  if (code.startsWith(EncodingStart)) {
+    code = code.substring(EncodingStart.length);
+    code = code.replaceAll("\r", "");
+    code = code.replaceAll("\n", "");
+    code = code.trim();
+    code = DecompressBase64(code);
+  }
+  return code;
+}
+
+class PuzzleParseException extends EleuRuntimeError {
+  PuzzleParseException(InputStatus? status, string msg) : super(status, msg);
+}
+
+// PuzzleBundle ParseBundle(string code)
+// {
+// 	code=getRawPuzzleCode(code);
+//   var puzParser = PuzzleParser(code, null);
+// 	return puzParser.Parse();
+// }
+
+class Puzzle {
+  List<List<FieldState>> Grid = [[]];
+  List<string> funcs = [];
+
+  
+  /// Index in bundle.
+  int BundleIndex = 0;
+  int get RowCount => Grid.length;
+  int get ColCount => Grid.isEmpty ? 0 : Grid[0].length;
+  Cat cat = Cat();
+  int EnergyUsed = 0;
+  int ReadCount = 0;
+  string Name = "";
+  string Description = "";
+  string WinCond = "";
+  int Complexity = 1000;
+  string ImageNameHint = "";
+  late PuzzleBundle Bundle;
+  Map<string, object> Defs = {};
+}
+
+class PuzzleBundle {
+  List<Puzzle> puzzles = [];
+  string Code = "";
+  string get Name => puzzles.isNotEmpty ? puzzles[0].Name : "";
+
+  PuzzleBundle(this.Code);
+
+  void AddPuzzle(Puzzle puzzle) {
+    puzzle.BundleIndex = puzzles.length;
+    puzzles.add(puzzle);
   }
 
-  // PuzzleBundle ParseBundle(string code)
-	// {
-	// 	code=getRawPuzzleCode(code);
-  //   var puzParser = PuzzleParser(code, null);
-	// 	return puzParser.Parse();
-	// }
+  int get Count => puzzles.length;
+
+  void SetImageNameHints(string eleuName) {
+    if (puzzles.isEmpty) return;
+    var fn = eleuName; // FileUtils.GetFullNameWithoutExtension(eleuName);
+    puzzles[0].ImageNameHint = "$fn.png";
+    for (int i = 1; i < puzzles.length; i++) {
+      var puz = puzzles[i];
+      puz.ImageNameHint = "${fn}_${i + 1}.png";
+    }
+  }
+
+  Puzzle operator [](int index) => puzzles[index];
+}
