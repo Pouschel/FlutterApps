@@ -1,4 +1,5 @@
 import 'dart:io'; // Platform
+import 'package:eleu/puzzles/puzzle_types.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:window_size/window_size.dart';
@@ -90,7 +91,10 @@ class CodeEditorState extends State<CodeEditor> {
     var opt = EleuOptions();
     opt.Out = opt.Err = UpdateWriter(this);
     infoText = "";
-    CompileAndRunAst(_codeController.text, "", opt);
+    var pc = getRawPuzzleCode(_codeController.text);
+    opt.Out.WriteLine(pc);
+
+    //CompileAndRunAst(_codeController.text, "", opt);
   }
 
   @override
