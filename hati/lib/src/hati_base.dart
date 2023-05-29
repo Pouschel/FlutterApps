@@ -23,3 +23,10 @@ extension StringExtension on String {
   List<string> splitAndRemoveEmpty(string sep) =>
       split(sep)..removeWhere((element) => element.isEmpty);
 }
+
+extension EnumExtension on Enum
+{
+  String toShortString() {
+    return toString().split('.').last;
+  }
+}

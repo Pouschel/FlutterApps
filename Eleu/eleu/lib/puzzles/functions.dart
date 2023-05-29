@@ -298,7 +298,7 @@ class PuzzleFunctions extends NativeFunctionBase {
     var cat = puzzle.cat;
     var cell = puzzle.get(cat.Row, cat.Col);
     puzzle.EnergyUsed++;
-    return cell.Color.toString();
+    return cell.Color.toShortString();
   }
 
   object seeing(OList _) {
@@ -306,7 +306,7 @@ class PuzzleFunctions extends NativeFunctionBase {
     var puzzle = CheckPuzzleActive("seeing");
     var cell = puzzle.FieldInFrontOfCat;
     puzzle.EnergyUsed++;
-    return cell.Object.toString();
+    return cell.Object.toShortString();
   }
 
   object read(OList _) {

@@ -19,6 +19,7 @@ enum ShapeColors {
   Black,
 }
 
+
 enum FieldShapes {
   None,
   Square,
@@ -40,7 +41,26 @@ enum Directions {
   W,
   S,
 }
-
+extension DirectionsExtension on Directions {
+  (int dx, int dy) GetOffsetForDirection() {
+    int dx = 0, dy = 0;
+    switch (this) {
+      case Directions.E:
+        dx = 1;
+        break;
+      case Directions.N:
+        dy = -1;
+        break;
+      case Directions.W:
+        dx = -1;
+        break;
+      case Directions.S:
+        dy = 1;
+        break;
+    }
+    return (dx, dy);
+  }
+}
 enum Turns {
   Left,
   Around,
@@ -136,26 +156,7 @@ extension FieldObjectExtension on FieldObjects {
   bool CanPush() => this == FieldObjects.Mouse;
 }
 
-extension DirectionsExtension on Directions {
-  (int dx, int dy) GetOffsetForDirection() {
-    int dx = 0, dy = 0;
-    switch (this) {
-      case Directions.E:
-        dx = 1;
-        break;
-      case Directions.N:
-        dy = -1;
-        break;
-      case Directions.W:
-        dx = -1;
-        break;
-      case Directions.S:
-        dy = 1;
-        break;
-    }
-    return (dx, dy);
-  }
-}
+
 
 string CompressBase64(string s) {
   var stringBytes = utf8.encode(s);
