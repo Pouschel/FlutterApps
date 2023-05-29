@@ -165,11 +165,11 @@ gAA""";
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/expressions/operator/equals.eleu";
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/expressions/operator/multiply.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);
-  //RunFile(fn, tw);
+  RunFile(fn, tw);
   //etest.TestFile(fn);
   //
 }

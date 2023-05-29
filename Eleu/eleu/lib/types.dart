@@ -40,8 +40,9 @@ class Number {
   bool get IsInt => IntValue == DVal;
   @override
   String toString() {
-    var f = IsInt ? NumberFormat("0","en_US"): NumberFormat("###.0#", "en_US");
-    return f.format(DVal);
+    if (IsInt)
+      return NumberFormat("0","en_US").format(DVal);
+    return DVal.toString();
   }
 
   @override

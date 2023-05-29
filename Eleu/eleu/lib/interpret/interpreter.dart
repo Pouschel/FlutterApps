@@ -82,7 +82,7 @@ class Interpreter extends IInterpreter
       var stat = ex.Status ?? currentStatus;
       var msg = "${stat.Message}: ${ex.Message}";
       options.Err.WriteLine(msg);
-      print(msg);
+      //print(msg);
       result = EEleuResult.RuntimeError;
     }
     return result;
