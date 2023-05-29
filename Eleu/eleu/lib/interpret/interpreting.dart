@@ -147,7 +147,7 @@ class EleuEnvironment
 	{
 		if (this == fence) return;
 
-		//TODO for (var item in values)
+		// for (var item in values)
 		// {
 		// 	if (item.Value is ICallable) continue;
 		// 	list.Add(new VariableInfo(item.Key, item.Value));
@@ -173,7 +173,7 @@ class VariableInfo
 
 	String get Value => Stringify(value);
 
-	//TODO String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
+	// String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
 
 	VariableInfo(this.name, this.value)
 	{

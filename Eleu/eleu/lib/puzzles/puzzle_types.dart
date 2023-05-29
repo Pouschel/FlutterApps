@@ -5,6 +5,7 @@ import 'package:archive/archive.dart';
 import '../eleu.dart';
 import '../scanning.dart';
 import '../types.dart';
+import 'puzzle.dart';
 
 enum ShapeColors {
   None,
@@ -106,7 +107,7 @@ class Cat {
   }
 }
 
-extension on FieldObjects {
+extension FieldObjectExtension on FieldObjects {
   string GetObjectName() {
     switch (this) {
       case FieldObjects.None:
@@ -128,7 +129,7 @@ extension on FieldObjects {
   bool CanPush() => this == FieldObjects.Mouse;
 }
 
-extension on Directions {
+extension DirectionsExtension on Directions {
   (int dx, int dy) GetOffsetForDirection() {
     int dx = 0, dy = 0;
     switch (this) {
@@ -207,27 +208,29 @@ class PuzzleParseException extends EleuRuntimeError {
 // 	return puzParser.Parse();
 // }
 
-class Puzzle {
-  List<List<FieldState>> Grid = [[]];
-  List<string> funcs = [];
-
-  
-  /// Index in bundle.
-  int BundleIndex = 0;
-  int get RowCount => Grid.length;
-  int get ColCount => Grid.isEmpty ? 0 : Grid[0].length;
-  Cat cat = Cat();
-  int EnergyUsed = 0;
-  int ReadCount = 0;
-  string Name = "";
-  string Description = "";
-  string WinCond = "";
-  int Complexity = 1000;
-  string ImageNameHint = "";
-  late PuzzleBundle Bundle;
-  Map<string, object> Defs = {};
+T? enumFromString<T>(Iterable<T> values, String value, bool ignoreCase) {
+  if (ignoreCase) value = value.toLowerCase();
+  for (var type in values) {
+    var enType = type.toString().split(".").last;
+    if (ignoreCase) enType = enType.toLowerCase();
+    if (enType == value) return type;
+  }
+  return null;
 }
 
+ShapeColors? ParseShapeColor(string s, bool ignoreCase) =>
+    enumFromString(ShapeColors.values, s, ignoreCase);
+FieldShapes? ParseFieldShape(string s, bool ignoreCase) =>
+    enumFromString(FieldShapes.values, s, ignoreCase);
+FieldObjects? ParseFieldObjects(string s, bool ignoreCase) =>
+    enumFromString(FieldObjects.values, s, ignoreCase);
+		
+
+extension StringExtension on string
+{
+  List<string> splitAndRemoveEmpty(string sep)
+  => this.split(' ')..removeWhere((element) => element.isEmpty);
+}
 class PuzzleBundle {
   List<Puzzle> puzzles = [];
   string Code = "";
