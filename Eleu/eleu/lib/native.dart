@@ -29,16 +29,17 @@ class NativeFunctionBase {
           "Die Funktion '${name}' erwartet mindestens ${nMinArgs} und höchstens ${nMaxArgs} Argumente");
   }
 
-  T CheckArgType<T>(int zeroIndex, List<Object> args, String funcName) {
+  T CheckArgType<T>(int zeroIndex, List<Object> args, String funcName, String tn) {
     if (args.length > zeroIndex) {
       var arg = args[zeroIndex];
       if (arg is T) return arg as T;
-      String tn = "";
-      if (arg is Number)
-        tn = "number";
-      else if (arg is String)
-        tn = "string";
-      else if (arg is bool) tn = "boolean";
+      // String tn = "";
+      // print(T.runtimeType.toString());
+      // if (T is Number)
+      //   tn = "number";
+      // else if (T is String)
+      //   tn = "string";
+      // else if (T is bool) tn = "boolean";
       throw EleuNativeError(
           "In der Funktion ${funcName} muss das ${zeroIndex + 1}. Argument vom Typ '${tn}' sein!");
     } else
@@ -107,7 +108,7 @@ class NativeFunctions extends NativeFunctionBase {
 
   Number MathFunc(double Function(double) func, OList args, string name) {
     CheckArgLenMulti(args, 1, -1, name);
-    var arg = CheckArgType<Number>(0, args, name);
+    var arg = CheckArgType<Number>(0, args, name, "number");
     var result = func(arg.DVal);
     if (result.isInfinite)
       throw EleuNativeError(
@@ -130,8 +131,8 @@ class NativeFunctions extends NativeFunctionBase {
   object _sin(string name, OList args) => MathFunc(sin, args, name);
   object _pow(string name, OList args) {
     CheckArgLen(args, 2, name);
-    var bas = CheckArgType<Number>(0, args, name);
-    var exp = CheckArgType<Number>(1, args, name);
+    var bas = CheckArgType<Number>(0, args, name,"number");
+    var exp = CheckArgType<Number>(1, args, name,"number");
     var result = pow(bas.DVal, exp.DVal);
     if (result.isInfinite)
       throw EleuNativeError(
@@ -170,7 +171,7 @@ class NativeFunctions extends NativeFunctionBase {
 
   object toFixed(string name, OList args) {
     CheckArgLen(args, 2, name);
-    var x = CheckArgType<Number>(0, args, name);
+    var x = CheckArgType<Number>(0, args, name,"number");
     var n = CheckIntArg(1, args);
     if (n < 0 || n > 20)
       throw EleuNativeError(
@@ -180,7 +181,7 @@ class NativeFunctions extends NativeFunctionBase {
 
   object parseInt(string name, OList args) {
     CheckArgLen(args, 1, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     var num = Number.TryParse(s);
     if (num == null)
       throw EleuNativeError(
@@ -195,7 +196,7 @@ class NativeFunctions extends NativeFunctionBase {
   //object parseNum(string name, OList args) => parseNumber(name, args);
   object parseNumber(string name, OList args) {
     CheckArgLen(args, 1, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     var num = Number.TryParse(s);
     if (num == null)
       throw EleuNativeError(
@@ -205,13 +206,13 @@ class NativeFunctions extends NativeFunctionBase {
 
   object len(string name, OList args) {
     CheckArgLen(args, 1, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     return Number(s.length.toDouble());
   }
 
   object charAt(string name, OList args) {
     CheckArgLen(args, 2, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     var idx = CheckIntArg(1, args);
     if (idx < 0 || idx >= s.length)
       throw EleuNativeError("Der Index ${idx} liegt außerhalb des Strings");
@@ -220,7 +221,7 @@ class NativeFunctions extends NativeFunctionBase {
 
   object substr(string name, OList args) {
     CheckArgLenMulti(args, 2, 3, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     int idx = CheckIntArg(1, args);
     int len = s.length - idx;
     if (args.length >= 3) len = CheckIntArg(2, args);
@@ -230,8 +231,8 @@ class NativeFunctions extends NativeFunctionBase {
 
   object indexOf(string name, OList args) {
     CheckArgLenMulti(args, 2, 3, name);
-    var s = CheckArgType<string>(0, args, name);
-    var such = CheckArgType<string>(1, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
+    var such = CheckArgType<string>(1, args, name,"string");
     int idx = 0;
     if (args.length >= 3) idx = CheckIntArg(2, args);
 
@@ -240,8 +241,8 @@ class NativeFunctions extends NativeFunctionBase {
 
   object lastIndexOf(string name, OList args) {
     CheckArgLenMulti(args, 2, 3, name);
-    var s = CheckArgType<string>(0, args, name);
-    var such = CheckArgType<string>(1, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
+    var such = CheckArgType<string>(1, args, name,"string");
     int idx = s.length;
     if (args.length >= 3) idx = CheckIntArg(2, args);
     try {
@@ -253,13 +254,13 @@ class NativeFunctions extends NativeFunctionBase {
 
   object toLowerCase(string name, OList args) {
     CheckArgLen(args, 1, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     return s.toLowerCase();
   }
 
   object toUpperCase(string name, OList args) {
     CheckArgLen(args, 1, name);
-    var s = CheckArgType<string>(0, args, name);
+    var s = CheckArgType<string>(0, args, name,"string");
     return s.toUpperCase();
   }
 

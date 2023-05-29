@@ -66,7 +66,7 @@ class PuzzleFunctions extends NativeFunctionBase {
   }
 
   object _puzzle(OList args) {
-    var s = CheckArgType<string>(0, args, "_puzzle");
+    var s = CheckArgType<string>(0, args, "_puzzle","string");
     int index = 0;
     if (args.length >= 2) index = CheckIntArg(1, args);
     var puzParser = PuzzleParser(s, Vm.currentStatus);
@@ -124,7 +124,7 @@ class PuzzleFunctions extends NativeFunctionBase {
     var puzzle = CheckPuzzleActive("move");
     var edir = puzzle.cat.LookAt;
     if (args.isNotEmpty) {
-      var dir = CheckArgType<string>(0, args, "move");
+      var dir = CheckArgType<string>(0, args, "move","string");
       edir = CheckDirection(dir);
     }
     var (dx, dy) = edir.GetOffsetForDirection();
@@ -238,7 +238,7 @@ class PuzzleFunctions extends NativeFunctionBase {
 
   object turn(OList args) {
     var puzzle = CheckPuzzleActive("turn");
-    var sdir = CheckArgType<string>(0, args, "turn");
+    var sdir = CheckArgType<string>(0, args, "turn","string");
     var turnDir = ParseTurns(sdir, true);
     if (turnDir == null) throw PException("'${sdir}' ist keine gültige Drehrichtung");
     var cat = puzzle.cat;
@@ -271,7 +271,7 @@ class PuzzleFunctions extends NativeFunctionBase {
 
   object paint(OList args) {
     var puzzle = CheckPuzzleActive("paint");
-    var sdir = CheckArgType<string>(0, args, "paint");
+    var sdir = CheckArgType<string>(0, args, "paint","string");
     SetColor(puzzle, sdir);
     int add = puzzle.cat.Carrying != FieldObjects.None ? 2 : 1;
     puzzle.EnergyUsed += add;
@@ -281,9 +281,9 @@ class PuzzleFunctions extends NativeFunctionBase {
 
   object setShape(OList args) {
     var puzzle = CheckPuzzleActive("setShape");
-    var sColor = CheckArgType<string>(0, args, "setShape");
+    var sColor = CheckArgType<string>(0, args, "setShape","string");
     var sShape = FieldShapes.Square.toString();
-    if (args.length > 1) sShape = CheckArgType<string>(1, args, "setShape");
+    if (args.length > 1) sShape = CheckArgType<string>(1, args, "setShape","string");
     SetShape(puzzle, sShape);
     SetColor(puzzle, sColor);
     int add = puzzle.cat.Carrying != FieldObjects.None ? 4 : 2;

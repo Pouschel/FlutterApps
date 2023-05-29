@@ -165,7 +165,8 @@ gAA""";
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/expressions/operator/multiply.eleu";
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/function/Native/sqrt_string.eleu";
+
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);
