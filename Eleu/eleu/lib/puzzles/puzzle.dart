@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import '../types.dart';
 import 'puzzle_parser.dart';
 import 'puzzle_types.dart';
+import 'package:hati/hati.dart';
 
 typedef GridType = List<List<FieldState>>;
 
@@ -47,15 +47,29 @@ class Puzzle {
   }
 
   string GetAllowedFuncString(string seperator) => funcs.join(seperator);
-  //TODO Puzzle Copy()
-  // {
-  // 	var copy = (Puzzle)this.MemberwiseClone();
-  // 	copy.Grid = (FieldState[,])this.Grid.Clone();
-  // 	copy.Cat = this.Cat.Copy();
-  // 	copy.Defs = new();
-  // 	copy.Defs.AddRange(this.Defs);
-  // 	return copy;
-  // }
+  Puzzle Copy() {
+    var copy = Puzzle(Bundle);
+
+    for (var el in Grid) {
+      List<FieldState> l = [];
+      copy.Grid.add(l);
+      for (var el1 in el) {
+        l.add(el1.Copy());
+      }
+    }
+    copy
+      ..BundleIndex = BundleIndex
+      ..EnergyUsed = EnergyUsed
+      ..ReadCount = ReadCount
+      ..Name = Name
+      ..Description = Description
+      ..WinCond = WinCond
+      ..Complexity = Complexity
+      ..ImageNameHint = ImageNameHint
+      ..cat = this.cat.Copy()
+      ..Defs.addAll(Defs);
+    return copy;
+  }
 
   bool IsCatAt(int x, int y) => cat.Row == y && cat.Col == x;
 
@@ -152,7 +166,7 @@ class Puzzle {
           int mrc = int.parse(args[1]);
           return this.ReadCount >= mrc;
       }
-    // ignore: empty_catches
+      // ignore: empty_catches
     } on Exception {}
     return null;
   }

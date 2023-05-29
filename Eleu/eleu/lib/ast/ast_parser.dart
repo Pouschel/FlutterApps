@@ -1,3 +1,5 @@
+import 'package:hati/hati.dart';
+
 import '../eleu.dart';
 import '../scanning.dart';
 import '../types.dart';

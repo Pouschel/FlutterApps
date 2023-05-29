@@ -1,6 +1,8 @@
 // ignore_for_file: file_names
 import 'dart:math';
 
+import 'package:hati/hati.dart';
+
 import 'eleu.dart';
 import 'interpret/interpreting.dart';
 import 'types.dart';

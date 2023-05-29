@@ -13,6 +13,8 @@ dependencies:
   code_text_field: ^1.1.0
   intl: ^0.18.1
   archive: ^3.3.7
+  hati: 
+    path: "../../hati"
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git

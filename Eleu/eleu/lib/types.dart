@@ -2,6 +2,7 @@
 
 import 'dart:collection';
 import 'package:eleu/ast/ast_stmt.dart';
+import 'package:hati/hati.dart';
 import 'package:intl/intl.dart';
 
 import 'eleu.dart';
@@ -9,8 +10,7 @@ import 'interpret/interpreter.dart';
 import 'interpret/interpreting.dart';
 
 typedef OList = List<Object>;
-typedef object = Object;
-typedef string = String;
+
 
 const Object NilValue = Object();
 

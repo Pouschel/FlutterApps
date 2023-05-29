@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:eleu/eleu.dart';
 import 'package:eleu/puzzles/puzzle_types.dart';
-import 'package:eleu/types.dart';
+import 'package:hati/hati.dart';
 
 class EleuTester {
   int nTests = 0, nSuccess = 0, nFail = 0, nSkipped = 0;
@@ -147,21 +147,6 @@ string GetFileName(string fn) {
   return File(fn).uri.pathSegments.last;
 }
 
-void printWarning(String text) {
-  print('\x1B[33m$text\x1B[0m');
-}
-
-void printError(String text) {
-  print('\x1B[31m$text\x1B[0m');
-}
-
-void printInfo(String text) {
-  print('\x1B[34m$text\x1B[0m');
-}
-
-void printSuccess(String text) {
-  print('\x1B[32m$text\x1B[0m');
-}
 
 void checkPuzzleCode() {
   var code = """>:)H4sIAAAAAAAACo2QTU7DMBCF95Z8h9kBCxCEFZW8C

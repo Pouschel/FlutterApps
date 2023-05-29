@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:hati/hati.dart';
+
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
 import '../eleu.dart';

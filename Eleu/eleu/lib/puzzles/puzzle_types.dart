@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:archive/archive.dart';
+import 'package:hati/hati.dart';
 
 import '../eleu.dart';
 import '../scanning.dart';
-import '../types.dart';
 import 'puzzle.dart';
 
 enum ShapeColors {
@@ -85,6 +85,12 @@ class FieldState {
   static FieldState RedWall = FieldState()
     ..Color = ShapeColors.Red
     ..Object = FieldObjects.Wall;
+
+  FieldState Copy() => FieldState()
+    ..Color = Color
+    ..Shape = Shape
+    ..Object = Object
+    ..SVal = SVal;
 }
 
 class Cat {
@@ -224,13 +230,9 @@ FieldShapes? ParseFieldShape(string s, bool ignoreCase) =>
     enumFromString(FieldShapes.values, s, ignoreCase);
 FieldObjects? ParseFieldObjects(string s, bool ignoreCase) =>
     enumFromString(FieldObjects.values, s, ignoreCase);
-		
+Directions? ParseDirections(string s, bool ignoreCase) =>
+    enumFromString(Directions.values, s, ignoreCase);
 
-extension StringExtension on string
-{
-  List<string> splitAndRemoveEmpty(string sep)
-  => this.split(' ')..removeWhere((element) => element.isEmpty);
-}
 class PuzzleBundle {
   List<Puzzle> puzzles = [];
   string Code = "";

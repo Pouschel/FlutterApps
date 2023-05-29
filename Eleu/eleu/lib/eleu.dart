@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:hati/hati.dart';
+
 import 'ast/ast_parser.dart';
 import 'ast/ast_stmt.dart';
 import 'interpret/interpreter.dart';
 import 'native.dart';
 import 'scanning.dart';
-import 'types.dart';
+
 
 enum FunctionType { FunTypeFunction, FunTypeInitializer, FunTypeMethod, FunTypeScript }
 
