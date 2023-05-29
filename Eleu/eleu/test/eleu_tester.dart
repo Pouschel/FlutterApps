@@ -169,7 +169,7 @@ void main() {
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);
-  RunFile(fn, tw);
+  //RunFile(fn, tw);
   //etest.TestFile(fn);
   //
 }

@@ -55,7 +55,6 @@ class NativeFunctionBase {
     }
     throw EleuNativeError("Argument ${zeroIndex + 1} muss eine ganze Zahl sein.");
   }
-  
 }
 
 class NativeFunctions extends NativeFunctionBase {
@@ -75,9 +74,19 @@ class NativeFunctions extends NativeFunctionBase {
     "sin": _sin,
     "pow": _pow,
     "random": _random,
-    "typeof": _typeof, "toFixed":toFixed, "parseInt":parseInt,
-    "parseFloat":parseFloat, "parseNumber":parseNumber,
-     "parseNum":parseNumber,
+    "typeof": _typeof,
+    "toFixed": toFixed,
+    "parseInt": parseInt,
+    "parseFloat": parseFloat,
+    "parseNumber": parseNumber,
+    "parseNum": parseNumber,
+    "len": len,
+    "charAt": charAt,
+    "substr": substr,
+    "indexOf": indexOf,
+    "lastIndexOf": lastIndexOf,
+    "toLowerCase": toLowerCase,
+    "toUpperCase": toUpperCase
   };
 
   NativeFunctions() {
@@ -159,35 +168,100 @@ class NativeFunctions extends NativeFunctionBase {
     return "undefined";
   }
 
-  	object toFixed(string name, OList args)
-	{
-		CheckArgLen(args, 2,name);
-		var x = CheckArgType<Number>(0, args,name);
-		var n = CheckIntArg(1, args);
-		if (n < 0 || n > 20)
-			throw EleuNativeError("Die Anzahl der Nachkommastellen muss eine ganze Zahl zwischen 0 und 20 sein.");
-		return x.DVal.toStringAsFixed(n);
-	}
-	
-   object parseInt(string name, OList args)
-	{
-		CheckArgLen(args, 1,name);
-		var s = CheckArgType<string>(0, args,name);
-		var num = Number.TryParse(s);
-		if (num==null ) throw  EleuNativeError("Die Zeichenkette '${s}' kann nicht in eine Zahl umgewandelt werden.");
-		if (! num.IsInt) throw  EleuNativeError("Die Zeichenkette '${s}' kann nicht in ganze eine Zahl umgewandelt werden.");
-		return num;
-	}
-	object parseFloat(string name, OList args) => parseNumber(name, args);
-	//object parseNum(string name, OList args) => parseNumber(name, args);
-	object parseNumber(string name, OList args)
-	{
-		CheckArgLen(args, 1,name);
-		var s = CheckArgType<string>(0, args,name);
-		var num = Number.TryParse(s);
-		if (num==null) throw EleuNativeError("Die Zeichenkette '${s}' kann nicht in eine Zahl umgewandelt werden.");
-		return num;
-	}
+  object toFixed(string name, OList args) {
+    CheckArgLen(args, 2, name);
+    var x = CheckArgType<Number>(0, args, name);
+    var n = CheckIntArg(1, args);
+    if (n < 0 || n > 20)
+      throw EleuNativeError(
+          "Die Anzahl der Nachkommastellen muss eine ganze Zahl zwischen 0 und 20 sein.");
+    return x.DVal.toStringAsFixed(n);
+  }
+
+  object parseInt(string name, OList args) {
+    CheckArgLen(args, 1, name);
+    var s = CheckArgType<string>(0, args, name);
+    var num = Number.TryParse(s);
+    if (num == null)
+      throw EleuNativeError(
+          "Die Zeichenkette '${s}' kann nicht in eine Zahl umgewandelt werden.");
+    if (!num.IsInt)
+      throw EleuNativeError(
+          "Die Zeichenkette '${s}' kann nicht in ganze eine Zahl umgewandelt werden.");
+    return num;
+  }
+
+  object parseFloat(string name, OList args) => parseNumber(name, args);
+  //object parseNum(string name, OList args) => parseNumber(name, args);
+  object parseNumber(string name, OList args) {
+    CheckArgLen(args, 1, name);
+    var s = CheckArgType<string>(0, args, name);
+    var num = Number.TryParse(s);
+    if (num == null)
+      throw EleuNativeError(
+          "Die Zeichenkette '${s}' kann nicht in eine Zahl umgewandelt werden.");
+    return num;
+  }
+
+  object len(string name, OList args) {
+    CheckArgLen(args, 1, name);
+    var s = CheckArgType<string>(0, args, name);
+    return Number(s.length.toDouble());
+  }
+
+  object charAt(string name, OList args) {
+    CheckArgLen(args, 2, name);
+    var s = CheckArgType<string>(0, args, name);
+    var idx = CheckIntArg(1, args);
+    if (idx < 0 || idx >= s.length)
+      throw EleuNativeError("Der Index ${idx} liegt außerhalb des Strings");
+    return s[idx];
+  }
+
+  object substr(string name, OList args) {
+    CheckArgLenMulti(args, 2, 3, name);
+    var s = CheckArgType<string>(0, args, name);
+    int idx = CheckIntArg(1, args);
+    int len = s.length - idx;
+    if (args.length >= 3) len = CheckIntArg(2, args);
+    if (idx < 0 || len < 0) EleuNativeError("Die Indizees liegen außerhalb des Bereichs");
+    return s.substring(idx, idx + len);
+  }
+
+  object indexOf(string name, OList args) {
+    CheckArgLenMulti(args, 2, 3, name);
+    var s = CheckArgType<string>(0, args, name);
+    var such = CheckArgType<string>(1, args, name);
+    int idx = 0;
+    if (args.length >= 3) idx = CheckIntArg(2, args);
+
+    return Number(s.indexOf(such, idx).toDouble());
+  }
+
+  object lastIndexOf(string name, OList args) {
+    CheckArgLenMulti(args, 2, 3, name);
+    var s = CheckArgType<string>(0, args, name);
+    var such = CheckArgType<string>(1, args, name);
+    int idx = s.length;
+    if (args.length >= 3) idx = CheckIntArg(2, args);
+    try {
+      return Number(s.lastIndexOf(such, idx).toDouble());
+    } on RangeError {
+      return EleuNativeError("Bereichsfehler");
+    }
+  }
+
+  object toLowerCase(string name, OList args) {
+    CheckArgLen(args, 1, name);
+    var s = CheckArgType<string>(0, args, name);
+    return s.toLowerCase();
+  }
+
+  object toUpperCase(string name, OList args) {
+    CheckArgLen(args, 1, name);
+    var s = CheckArgType<string>(0, args, name);
+    return s.toUpperCase();
+  }
 
   static void DefineAll(IInterpreter vm) {
     var funcClass = NativeFunctions();
