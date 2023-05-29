@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'puzzle_parser.dart';
-import 'puzzle_types.dart';
+import 'parser.dart';
+import 'types.dart';
 import 'package:hati/hati.dart';
 
 typedef GridType = List<List<FieldState>>;

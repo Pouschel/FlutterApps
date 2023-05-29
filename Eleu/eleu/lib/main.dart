@@ -1,5 +1,5 @@
 import 'dart:io'; // Platform
-import 'package:eleu/puzzles/puzzle_types.dart';
+import 'package:eleu/puzzles/types.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:window_size/window_size.dart';

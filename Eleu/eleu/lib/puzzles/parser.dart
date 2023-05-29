@@ -3,7 +3,7 @@ import 'package:hati/hati.dart';
 
 import '../scanning.dart';
 import 'puzzle.dart';
-import 'puzzle_types.dart';
+import 'types.dart';
 
 class PuzzleParser {
   InputStatus? status;

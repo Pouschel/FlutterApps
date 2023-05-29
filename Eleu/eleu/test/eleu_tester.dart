@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:eleu/eleu.dart';
-import 'package:eleu/puzzles/puzzle_types.dart';
+import 'package:eleu/puzzles/types.dart';
 import 'package:hati/hati.dart';
 
 class EleuTester {
