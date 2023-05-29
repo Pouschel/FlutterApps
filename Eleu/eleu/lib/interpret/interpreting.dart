@@ -26,8 +26,8 @@ bool IsTruthy(Object value) {
 
 bool ObjEquals(Object a, Object b) {
   if (a == b) return true;
-  // if (a is Number  && b is Number ) return da.Equals(db);
-  // if (a.Equals(b)) return true;
+  if (a is Number && b is Number) return a.DVal == b.DVal;
+  if (a == b) return true;
   return false;
 }
 
@@ -93,110 +93,96 @@ class InterpretResult {
   String toString() => "${Stat}: ${Stringify(Value)}";
 }
 
-class EleuEnvironment
-{
-	final EleuEnvironment? enclosing;
-	final OTable values = OTable();
+class EleuEnvironment {
+  final EleuEnvironment? enclosing;
+  final OTable values = OTable();
 
-	EleuEnvironment(this.enclosing);
-	void Define(String name, Object value) => values.Set(name, value);
+  EleuEnvironment(this.enclosing);
+  void Define(String name, Object value) => values.Set(name, value);
 
-	Object GetAtDistance0(String name)=>values.Get(name);
+  Object GetAtDistance0(String name) => values.Get(name);
 
-	bool ContainsAtDistance0(String name) => values.ContainsKey(name);
-	Object GetAt(String name, int distance)
-	{
-		var tab = Ancestor(distance)?.values;
-		var val= tab?.Get(name);
-		return val ?? NilValue;
-	}
-	void AssignAt(int distance, String name, Object value)
-		=> Ancestor(distance)?.values.Set(name, value);
+  bool ContainsAtDistance0(String name) => values.ContainsKey(name);
+  Object GetAt(String name, int distance) {
+    var tab = Ancestor(distance)?.values;
+    var val = tab?.Get(name);
+    return val ?? NilValue;
+  }
 
-	EleuEnvironment? Ancestor(int distance)
-	{
-		EleuEnvironment? environment = this;
-		for (int i = 0; i < distance; i++)
-		{
-			environment = environment?.enclosing;
-		}
-		return environment;
-	}
-	Object Lookup(String name)
-	{
-		if (values.ContainsKey(name)) return values.Get(name);
-		if (enclosing != null)
-			return enclosing!.Lookup(name);
-		throw EleuRuntimeError(null, "Variable nicht definiert '$name'.");
-	}
-	void Assign(String name, Object value)
-	{
-		if (values.ContainsKey(name))
-		{
-			values.Set(name, value);
-			return;
-		}
-		if (enclosing != null)
-		{
-			enclosing!.Assign(name, value);
-			return;
-		}
-		throw EleuRuntimeError(null, "Variable nicht definiert '$name'.");
-	}
-	void GetNameAndValues(List<VariableInfo> list, EleuEnvironment? fence)
-	{
-		if (this == fence) return;
+  void AssignAt(int distance, String name, Object value) =>
+      Ancestor(distance)?.values.Set(name, value);
 
-		// for (var item in values)
-		// {
-		// 	if (item.Value is ICallable) continue;
-		// 	list.Add(new VariableInfo(item.Key, item.Value));
-		// }
-	}
-	
-  List<VariableInfo> GetVariableInfos(EleuEnvironment? fence)
-	{
-		var list = List<VariableInfo>.empty(growable: true);
-		this.GetNameAndValues(list, fence);
-		if (enclosing != null)
-			enclosing!.GetNameAndValues(list, fence);
-		return list;
-	}
+  EleuEnvironment? Ancestor(int distance) {
+    EleuEnvironment? environment = this;
+    for (int i = 0; i < distance; i++) {
+      environment = environment?.enclosing;
+    }
+    return environment;
+  }
+
+  Object Lookup(String name) {
+    if (values.ContainsKey(name)) return values.Get(name);
+    if (enclosing != null) return enclosing!.Lookup(name);
+    throw EleuRuntimeError(null, "Variable nicht definiert '$name'.");
+  }
+
+  void Assign(String name, Object value) {
+    if (values.ContainsKey(name)) {
+      values.Set(name, value);
+      return;
+    }
+    if (enclosing != null) {
+      enclosing!.Assign(name, value);
+      return;
+    }
+    throw EleuRuntimeError(null, "Variable nicht definiert '$name'.");
+  }
+
+  void GetNameAndValues(List<VariableInfo> list, EleuEnvironment? fence) {
+    if (this == fence) return;
+
+    // for (var item in values)
+    // {
+    // 	if (item.Value is ICallable) continue;
+    // 	list.Add(new VariableInfo(item.Key, item.Value));
+    // }
+  }
+
+  List<VariableInfo> GetVariableInfos(EleuEnvironment? fence) {
+    var list = List<VariableInfo>.empty(growable: true);
+    this.GetNameAndValues(list, fence);
+    if (enclosing != null) enclosing!.GetNameAndValues(list, fence);
+    return list;
+  }
 }
 
-class VariableInfo
-{
-	 String name;
-	 Object value;
+class VariableInfo {
+  String name;
+  Object value;
 
-	String get Name => name;
+  String get Name => name;
 
-	String get Value => Stringify(value);
+  String get Value => Stringify(value);
 
-	// String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
+  // String get Type => NativeFunctions.@typeof(new object[] { value }).ToString()!;
 
-	VariableInfo(this.name, this.value)
-	{
-		this.name = name;
-		this.value = value;
-	}
+  VariableInfo(this.name, this.value) {
+    this.name = name;
+    this.value = value;
+  }
 }
 
+class CallStackInfo {
+  final ICallable Function;
+  final EleuEnvironment Fence;
+  final Interpreter vm;
+  CallStackInfo(this.vm, this.Function, this.Fence);
 
+  @override
+  String toString() {
+    String s = Function.Name;
+    return s;
+  }
 
-class CallStackInfo
-{
-	final ICallable  Function; 
-	final EleuEnvironment Fence;
-	final Interpreter vm;
-	CallStackInfo(this.vm, this.Function, this.Fence);
-
-	@override
-   String toString()
-	{
-		String s = Function.Name;
-		return s;
-	}
-
-	List<VariableInfo> GetLocals() => vm.environment.GetVariableInfos(Fence);
+  List<VariableInfo> GetLocals() => vm.environment.GetVariableInfos(Fence);
 }

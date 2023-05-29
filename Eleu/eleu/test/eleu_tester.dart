@@ -147,7 +147,6 @@ string GetFileName(string fn) {
   return File(fn).uri.pathSegments.last;
 }
 
-
 void checkPuzzleCode() {
   var code = """>:)H4sIAAAAAAAACo2QTU7DMBCF95Z8h9kBCxCEFZW8C
 FVVJCD8JAWxdOJJYhHbYuI0EufhGOx6MSZFQpXKoitr3
@@ -166,10 +165,11 @@ gAA""";
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/statements/repeat/repeats.eleu";
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/expressions/operator/equals.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);
   RunFile(fn, tw);
+  //etest.TestFile(fn);
   //
 }

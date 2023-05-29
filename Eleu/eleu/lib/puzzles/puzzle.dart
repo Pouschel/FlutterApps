@@ -7,7 +7,7 @@ import 'package:hati/hati.dart';
 typedef GridType = List<List<FieldState>>;
 
 class Puzzle {
-  GridType Grid = [[]];
+  GridType Grid = [];
   List<string> funcs = [];
 
   /// Index in bundle.

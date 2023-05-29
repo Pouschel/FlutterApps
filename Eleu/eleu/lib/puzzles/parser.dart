@@ -141,10 +141,8 @@ class PuzzleParser {
 
   void SetGrid(GridType fields, int colCount) {
     for (var line in fields) {
-      if (line.length < colCount) {
-        for (var i = 0; i < colCount - line.length; i++) {
-          line.add(FieldState());
-        }
+      while (line.length < colCount) {
+        line.add(FieldState());
       }
     }
     puzzle.SetGrid(fields);
