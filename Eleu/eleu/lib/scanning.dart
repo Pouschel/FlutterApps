@@ -278,8 +278,12 @@ class Scanner {
     }
 
     int rune = ch.codeUnitAt(0);
-    return (rune >= 0x41 && rune <= 0x5A) || (rune >= 0x61 && rune <= 0x7A);
+    return rune >= 0x41 && rune <= 0x5A || rune >= 0x61 && rune <= 0x7A
+    || runeInRange(rune, 0xc0, 0x1bf);
   }
+
+  static bool runeInRange(int rune, int lower, int upper) =>
+      rune >= lower && rune <= upper;
 
   static bool isDigit(String? ch) {
     if (ch == null) {
