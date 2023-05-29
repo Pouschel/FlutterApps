@@ -165,12 +165,9 @@ gAA""";
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/puzzle_tests/colors.eleu";
-
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/function/Native/typeof.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);
   RunFile(fn, tw);
-  //etest.TestFile(fn);
-  //
 }

@@ -151,22 +151,21 @@ class NativeFunctions extends NativeFunctionBase {
     CheckArgLen(args, 1, name);
     var arg = args[0];
     switch (arg) {
-      case bool:
+      case bool _:
         return "boolean";
-      case Number:
+      case Number _:
         return "number";
-      case string:
+      case string _:
         return "string";
       case EleuClass cl:
         return "metaclass ${cl.Name}";
       case EleuInstance inst:
-        "class ${inst.klass.Name}";
-      case ICallable:
+        return "class ${inst.klass.Name}";
+      case ICallable _:
         return "function";
       default:
         return "undefined";
     }
-    return "undefined";
   }
 
   object toFixed(string name, OList args) {
