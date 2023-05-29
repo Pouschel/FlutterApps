@@ -5,6 +5,7 @@ import 'package:hati/hati.dart';
 
 import '../eleu.dart';
 import '../scanning.dart';
+import 'parser.dart';
 import 'puzzle.dart';
 
 enum ShapeColors {
@@ -207,12 +208,15 @@ class PuzzleParseException extends EleuRuntimeError {
   PuzzleParseException(InputStatus? status, string msg) : super(status, msg);
 }
 
-// PuzzleBundle ParseBundle(string code)
-// {
-// 	code=getRawPuzzleCode(code);
-//   var puzParser = PuzzleParser(code, null);
-// 	return puzParser.Parse();
-// }
+class PException extends EleuRuntimeError {
+  PException(string msg) : super(null, msg);
+}
+
+PuzzleBundle ParseBundle(string code) {
+  code = getRawPuzzleCode(code);
+  var puzParser = PuzzleParser(code, null);
+  return puzParser.Parse();
+}
 
 T? enumFromString<T>(Iterable<T> values, String value, bool ignoreCase) {
   if (ignoreCase) value = value.toLowerCase();
@@ -232,6 +236,10 @@ FieldObjects? ParseFieldObjects(string s, bool ignoreCase) =>
     enumFromString(FieldObjects.values, s, ignoreCase);
 Directions? ParseDirections(string s, bool ignoreCase) =>
     enumFromString(Directions.values, s, ignoreCase);
+Turns? ParseTurns(string s, bool ignoreCase) =>
+    enumFromString(Turns.values, s, ignoreCase);
+
+
 
 class PuzzleBundle {
   List<Puzzle> puzzles = [];
