@@ -154,7 +154,7 @@ class Puzzle {
           }
         case "Max":
           {
-            int maxVal = 1 << 52;
+            int maxVal = -(1 << 52);
             return CheckCellMath(args, (n) => maxVal = max(n, maxVal), () => maxVal);
           }
         case "Sum":
@@ -185,7 +185,7 @@ class Puzzle {
 
     for (int iy = r0; iy <= r1; iy++) {
       for (int ix = c0; ix <= c1; ix++) {
-        var num = get(dy, dx).Num;
+        var num = get(iy, ix).Num;
         if (num == null) return false;
         numberAction(num);
       }

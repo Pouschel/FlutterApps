@@ -165,7 +165,7 @@ gAA""";
 
 void main() {
   var tw = TextWriter();
-  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/expressions/assignment/syntax.eleu";
+  var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/puzzle/FromLessons/A44-Summe.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var etest = EleuTester();
   etest.RunTests(tdir);

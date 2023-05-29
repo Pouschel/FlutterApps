@@ -65,7 +65,7 @@ class NativeFunctions extends NativeFunctionBase {
     "toString": _toString,
     "print": print,
     "sqrt": _sqrt,
-    "_abs": _abs,
+    "abs": _abs,
     "acos": _acos,
     "asin": _asin,
     "ceil": _ceil,
