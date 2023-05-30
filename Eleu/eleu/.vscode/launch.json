@@ -25,9 +25,9 @@
       "name": "Eleu Tester",
       "request": "launch",
       "type": "dart",
-      "program": "test/eleu_tester.dart",
-      
+      "program": "apps/eleu_tester.dart",
+    },
 
-    }
+
   ]
 }
