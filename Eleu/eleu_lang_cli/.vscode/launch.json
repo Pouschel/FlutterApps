@@ -10,6 +10,14 @@
       "type": "dart",
       "program": "bin/eleu_lang_cli.dart",
 
+    },
+    {
+      "name": "Run input file",
+      "request": "launch",
+      "type": "dart",
+      "program": "bin/eleu_lang_cli.dart",
+      "args":["${workspaceFolder}/data/input1.txt"]
+
     }
   ]
 }
