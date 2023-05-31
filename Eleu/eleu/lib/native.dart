@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:hati/hati.dart';
 
 import 'eleu.dart';
+import 'interpret/interpreter.dart';
 import 'interpret/interpreting.dart';
 import 'types.dart';
 
@@ -11,8 +12,8 @@ class EleuNativeError extends EleuRuntimeError {
 }
 
 class NativeFunctionBase {
-  IInterpreter? vm;
-  IInterpreter get Vm => vm!;
+  Interpreter? vm;
+  Interpreter get Vm => vm!;
 
   void CheckArgLen(List<Object> args, int nMinArgs, String name) =>
       CheckArgLenMulti(args, nMinArgs, -1, name);
@@ -263,7 +264,7 @@ class NativeFunctions extends NativeFunctionBase {
     return s.toUpperCase();
   }
 
-  static void DefineAll(IInterpreter vm) {
+  static void DefineAll(Interpreter vm) {
     var funcClass = NativeFunctions();
     funcClass.vm = vm;
     funcClass.funcMap.forEach((name, value) {

@@ -5,6 +5,9 @@ import 'package:hati/hati.dart';
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
 import '../eleu.dart';
+import '../native.dart';
+import '../puzzles/functions.dart';
+import '../puzzles/puzzle.dart';
 import '../scanning.dart';
 import '../types.dart';
 import 'interpreting.dart';
@@ -27,8 +30,14 @@ class Stack<E> {
   String toString() => _list.toString();
 }
 
-class Interpreter extends IInterpreter
-    implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
+class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
+  EleuOptions options;
+  InputStatus currentStatus = InputStatus.Empty;
+  Puzzle? puzzle;
+  void Function(Puzzle?)? PuzzleChanged;
+
+  int FrameTimeMs = 100;
+  int InstructionCount = 0;
   final List<Stmt> statements;
   EleuEnvironment globals = EleuEnvironment(null);
   late EleuEnvironment environment;
@@ -42,26 +51,32 @@ class Interpreter extends IInterpreter
 
   int ExecutedInstructionCount = 0;
 
-  Interpreter(EleuOptions options, this.statements, this.orgTokens) : super(options) {
+  Interpreter(this.options, this.statements, this.orgTokens) {
+    NativeFunctions.DefineAll(this);
+    PuzzleFunctions.DefineAll(this);
     this.environment = globals;
     globals.Define("PI", Number(pi));
     Execute = ExecuteRelease;
+  }
+
+  void NotifyPuzzleChange(Puzzle? newPuzzle) {
+    if (PuzzleChanged != null) PuzzleChanged!(newPuzzle);
   }
 
   InterpretResult ExecuteRelease(Stmt stmt) {
     return stmt.Accept(this);
   }
 
-  @override
+  
   void RuntimeError(String msg) => throw EleuRuntimeError(currentStatus, msg);
 
-  @override
+  
   void DefineNative(String name, NativeFn function) {
     var ofun = NativeFunction(name, function);
     globals.Define(name, ofun);
   }
 
-  @override
+  
   EEleuResult Interpret() {
     Execute = ExecuteRelease;
     return DoInterpret();
@@ -210,7 +225,7 @@ class Interpreter extends IInterpreter
 
   @override
   InterpretResult VisitBreakContinueStmt(BreakContinueStmt stmt) {
-	return stmt.IsBreak ? InterpretResult.BreakResult : InterpretResult.ContinueResult;
+    return stmt.IsBreak ? InterpretResult.BreakResult : InterpretResult.ContinueResult;
   }
 
   @override
@@ -342,34 +357,30 @@ class Interpreter extends IInterpreter
 
   @override
   InterpretResult VisitRepeatStmt(RepeatStmt stmt) {
-		var result = InterpretResult.NilResult;
-		int? GetCount()
-		{
-			var count = Evaluate(stmt.Count);
-			if (count is! Number ) return null;
-			if (!count.IsInt) return null;
-			return count.IntValue;
-		}
-		var count = GetCount();
-		if (count is! int) 
+    var result = InterpretResult.NilResult;
+    int? GetCount() {
+      var count = Evaluate(stmt.Count);
+      if (count is! Number) return null;
+      if (!count.IsInt) return null;
+      return count.IntValue;
+    }
+
+    var count = GetCount();
+    if (count is! int)
       throw EleuRuntimeError(stmt.Count.Status, "Es wird eine natürliche Zahl erwartet.");
 
-		for (int i = 0; i < count; i++)
-		{
-			result = Execute(stmt.Body);
-			if (result.Stat == InterpretStatus.Continue)
-			{
-				continue;
-			}
-			if (result.Stat == InterpretStatus.Break)
-			{
-				result = InterpretResult.NilResult;
-				break;
-			}
-			if (result.Stat != InterpretStatus.Normal)
-				break;
-		}
-		return result;
+    for (int i = 0; i < count; i++) {
+      result = Execute(stmt.Body);
+      if (result.Stat == InterpretStatus.Continue) {
+        continue;
+      }
+      if (result.Stat == InterpretStatus.Break) {
+        result = InterpretResult.NilResult;
+        break;
+      }
+      if (result.Stat != InterpretStatus.Normal) break;
+    }
+    return result;
   }
 
   @override
@@ -399,7 +410,7 @@ class Interpreter extends IInterpreter
     if (method == NilValue) {
       throw Error("Undefined property '${expr.Method}'.");
     }
-    return (method as EleuFunction). bind(obj);
+    return (method as EleuFunction).bind(obj);
   }
 
   @override

@@ -2,7 +2,7 @@
 import 'package:hati/hati.dart';
 
 import '../Native.dart';
-import '../eleu.dart';
+import '../interpret/interpreter.dart';
 import '../interpret/interpreting.dart';
 import '../types.dart';
 import 'parser.dart';
@@ -357,7 +357,7 @@ class PuzzleFunctions extends NativeFunctionBase {
     return Number(puzzle.EnergyUsed.toDouble());
   }
 
-  static void DefineAll(IInterpreter vm) {
+  static void DefineAll(Interpreter vm) {
     var funcClass = PuzzleFunctions();
     funcClass.vm = vm;
     funcClass.funcMap.forEach((name, value) {

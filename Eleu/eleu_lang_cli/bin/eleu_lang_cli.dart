@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:eleu_lang_cli/eleu_lang_cli.dart';
 
 void main(List<String> arguments) {
-  CmdProcessor proc = CmdProcessor.createStdinOutProcessor();
-  
+  // ignore: unused_local_variable
+  CmdProcessor proc = arguments.isEmpty
+      ? CmdProcessor.createStdinOutProcessor()
+      : CmdProcessor.createFileProcessor(arguments[0]);
 }
 
 Stream<String> readLine() =>
