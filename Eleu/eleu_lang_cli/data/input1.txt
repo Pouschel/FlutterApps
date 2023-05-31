@@ -1,7 +1,7 @@
-§filename C:\Code\OwnApps\EleuStudio\EleuSrc\Examples\Ex1.eleu
+§filename Ex1.eleu
 §code
 
-print("ÄÜ");
+pr int("ÄÜ");
 if (x >= 4); { print(x); }
 §end_code
 
