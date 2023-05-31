@@ -11,11 +11,7 @@ void main(List<String> arguments) async {
     proc.processLines(cnt);
     return;
   }
-  CmdProcessor proc = CmdProcessor.createStdinOutProcessor();
-
-  // await Future.delayed(Duration(seconds: 2));
-
-  // print("after wait");
+  CmdProcessor.createStdinOutProcessor();
 }
 
 Stream<String> readLine() =>

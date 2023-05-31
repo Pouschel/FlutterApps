@@ -12,24 +12,39 @@ enum CmdMode {
   puzzle,
 }
 
-class CmdProcessorBase extends TextWriter {
+class CallbackWriter extends TextWriter
+{
+    void Function(String ) callback;
+
+    CallbackWriter(this.callback);
+    
+   
+    // ignore: non_constant_identifier_names
+    @override  void WriteLine(String msg) {
+      callback(msg);
+  }
+}
+
+class CmdProcessorBase {
   final void Function(String) _output;
   CmdMode _mode = CmdMode.command;
   StringBuffer _buffer = StringBuffer();
   String _fileName = "";
   Interpreter? _interpreter;
+  bool _infoMsgReceived=false;
+
 
   CmdProcessorBase(this._output);
 
   void processLines(String linesString) {
     var lines = linesString.split('\n');
     for (var l in lines) {
-       processLine(l);
+      processLine(l);
     }
   }
 
   void processLine(String line) {
-    stderr.writeln("<$line");
+    //stderr.writeln("<$line");
     if (line.isEmpty) {
       if (_mode != CmdMode.command) _buffer.writeln();
       return;
@@ -73,6 +88,8 @@ class CmdProcessorBase extends TextWriter {
     _fileName = "";
     _mode = CmdMode.command;
     _buffer = StringBuffer();
+    _interpreter=null;
+    _infoMsgReceived=false;
   }
 
   void _sendOutput(String head, String s) {
@@ -84,19 +101,27 @@ class CmdProcessorBase extends TextWriter {
   void _sendError(String msg) => _sendOutput("err", msg);
   void _sendInfo(String msg) => _sendOutput("info", msg);
 
+  void _onErrorMsg(String s) => _sendError(s);
+  void _onInfoMsg(String s)
+  {
+_sendInfo(s);
+_infoMsgReceived=true;
+  }
   void _endCodeHandler() {
     var code = _buffer.toString();
-    var swErr = StringWriter(), swOut = StringWriter();
+    _buffer.clear();
     var opt = EleuOptions()
-      ..Out = swOut
-      ..Err = swErr;
+      ..Out = CallbackWriter(_onInfoMsg)
+      ..Err = CallbackWriter(_onErrorMsg);
+    var watch= Stopwatch()..start();
     var (result, interp) = Compile(code, _fileName, opt);
+    _sendInfo("Skript übersetzt in ${watch.elapsedMilliseconds} ms");  
     if (result != EEleuResult.Ok) {
-      _sendError(swErr.toString());
       return;
     }
     _interpreter = interp;
   }
+
 }
 
 class CmdProcessor extends CmdProcessorBase {

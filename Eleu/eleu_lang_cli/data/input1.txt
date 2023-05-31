@@ -1,13 +1,11 @@
 §filename Ex1.eleu
 §code
 
-pr int("ÄÜ");
+print("ÄÜ");
 if (x >= 4); { print(x); }
 §end_code
 
-§puzzle
-§endpuzzle
 §run
-§stop
+
 
 
