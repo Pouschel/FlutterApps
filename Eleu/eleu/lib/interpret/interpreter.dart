@@ -13,22 +13,7 @@ import '../types.dart';
 import 'interpreting.dart';
 import 'resolver.dart';
 
-class Stack<E> {
-  final _list = <E>[];
 
-  void push(E value) => _list.add(value);
-
-  E pop() => _list.removeLast();
-
-  E get peek => _list.last;
-
-  bool get isEmpty => _list.isEmpty;
-  bool get isNotEmpty => _list.isNotEmpty;
-  int get length => _list.length;
-
-  @override
-  String toString() => _list.toString();
-}
 
 class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   EleuOptions options;
@@ -67,16 +52,13 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     return stmt.Accept(this);
   }
 
-  
   void RuntimeError(String msg) => throw EleuRuntimeError(currentStatus, msg);
 
-  
   void DefineNative(String name, NativeFn function) {
     var ofun = NativeFunction(name, function);
     globals.Define(name, ofun);
   }
 
-  
   EEleuResult Interpret() {
     Execute = ExecuteRelease;
     return DoInterpret();
