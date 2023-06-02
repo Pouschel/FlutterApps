@@ -105,7 +105,13 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   }
 
   @override
-  void VisitReturnStmt(ReturnStmt stmt) {}
+  void VisitReturnStmt(ReturnStmt stmt) {
+    if (stmt.Value != null)
+      stmt.Value!.Accept(this);
+    else
+      chunk.add(PushInstruction(NilValue, stmt.Keyword.Status));
+    chunk.add(ReturnInstruction(stmt.Status));
+  }
 
   @override
   void VisitVarStmt(VarStmt stmt) {
@@ -129,9 +135,12 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     int incrementOfs = chunk.length;
     if (stmt.Increment != null) {
       stmt.Increment!.Accept(this);
+      chunk.add(PopInstruction(stmt.Increment!.Status));
     }
+    chunk.add(JumpInstruction(JumpMode.jmp, stmt.Condition.Status)..offset = loopStart);
+    exitJump.offset = chunk.length;
 
-    //patchBreakContinues(endJump.offset, incrementOfs);
+    patchBreakContinues(exitJump.offset, incrementOfs);
     breakContinues = oldBreaks;
   }
 

@@ -81,13 +81,13 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult Interpret() {
-    // var res = start();
-    // while (res == EEleuResult.NextStep) {
-    //   res = step();
-    // }
-    // return res;
-    Execute = ExecuteRelease;
-    return DoInterpret();
+    var res = start();
+    while (res == EEleuResult.NextStep) {
+      res = step();
+    }
+    return res;
+    // Execute = ExecuteRelease;
+    // return DoInterpret();
   }
 
   

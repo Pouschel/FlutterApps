@@ -289,6 +289,13 @@ class AssignInstruction extends Instruction {
     } else {
       vm.globals.Assign(name, value);
     }
-    
+  }
+}
+
+class ReturnInstruction extends Instruction {
+  ReturnInstruction(InputStatus status) : super(status);
+  @override
+  void execute(Interpreter vm) {
+    vm.leaveFrame();
   }
 }
