@@ -24,6 +24,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   int InstructionCount = 0;
   final List<Stmt> statements;
   EleuEnvironment globals = EleuEnvironment(null);
+  List<EleuEnvironment> prevEnvs = [];
   late EleuEnvironment environment;
   Map<Expr, int> locals = Map.identity();
   bool Function(Stmt)? canContinueFunc;
@@ -34,8 +35,9 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   int MaxStackDepth = 200;
   int ExecutedInstructionCount = 0;
 
-  Object lastValue = NilValue;
+  List<Chunk> chunks = [];
   late Chunk chunk;
+  List<Object> valueStack = [];
 
   Interpreter(this.options, this.statements, this.orgTokens) {
     NativeFunctions.DefineAll(this);
@@ -44,6 +46,18 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     globals.Define("PI", Number(pi));
     Execute = ExecuteRelease;
   }
+
+  void enterChunk(Chunk newChunk) {
+    chunks.add(this.chunk);
+    chunk = newChunk;
+  }
+
+  void leaveChunk() => chunk = chunks.removeLast();
+  void enterEnv(EleuEnvironment env) => prevEnvs.add(env);
+  void leaveEnv() => environment = prevEnvs.removeLast();
+  void push(Object o) => valueStack.add(o);
+  void peek() => valueStack[valueStack.length - 1];
+  Object pop() => valueStack.removeLast();
 
   void NotifyPuzzleChange(Puzzle? newPuzzle) {
     if (PuzzleChanged != null) PuzzleChanged!(newPuzzle);
@@ -77,7 +91,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       callStack = Stack();
       Resolve();
       ExecutedInstructionCount = 0;
-      lastValue = NilValue;
       chunk = StmtCompiler().compile(this.statements);
       return EEleuResult.NextStep;
     } on EleuRuntimeError catch (ex) {
@@ -95,6 +108,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     var ins = chunk.nextInstruction();
     if (ins == null) return EEleuResult.Ok;
     try {
+      currentStatus = ins.status;
       ins.execute(this);
     } on EleuRuntimeError catch (ex) {
       if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;

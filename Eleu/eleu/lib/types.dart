@@ -8,9 +8,9 @@ import 'package:intl/intl.dart';
 import 'eleu.dart';
 import 'interpret/interpreter.dart';
 import 'interpret/interpreting.dart';
+import 'interpret/stmt_compiler.dart';
 
 typedef OList = List<Object>;
-
 
 const Object NilValue = Object();
 
@@ -40,8 +40,7 @@ class Number {
   bool get IsInt => IntValue == DVal;
   @override
   String toString() {
-    if (IsInt)
-      return NumberFormat("0","en_US").format(DVal);
+    if (IsInt) return NumberFormat("0", "en_US").format(DVal);
     return DVal.toString();
   }
 
@@ -104,6 +103,8 @@ class EleuFunction implements ICallable {
   final FunctionStmt declaration;
   final EleuEnvironment closure;
   final bool isInitializer;
+  Chunk? chunk;
+
   EleuFunction(this.declaration, this.closure, this.isInitializer);
 
   @override
@@ -130,6 +131,8 @@ class EleuFunction implements ICallable {
     environment.Define("this", instance);
     return EleuFunction(declaration, environment, isInitializer);
   }
+
+  
 }
 
 class EleuClass implements ICallable {

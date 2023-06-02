@@ -7,11 +7,10 @@ import 'ast_expr.dart';
 import 'ast_stmt.dart';
 
 abstract class ExprStmtBase {
-  InputStatus Status=InputStatus();
+  InputStatus Status = InputStatus();
 
-  
   @override
-  String toString() =>  Status.toString();
+  String toString() => Status.toString();
 }
 
 class AstParser {
@@ -39,7 +38,8 @@ class AstParser {
 
   void Declaration(List<Stmt> statements) {
     try {
-      if (Match(TokenType.TokenVar)) statements.add(VarDeclaration());
+      if (Match(TokenType.TokenVar))
+        statements.add(VarDeclaration());
       else if (Match(TokenType.TokenFun))
         statements.add(Function(FunctionType.FunTypeFunction));
       else if (Match(TokenType.TokenClass))
@@ -256,7 +256,7 @@ class AstParser {
   Expr Assignment() {
     Expr expr = Or();
     if (Match(TokenType.TokenEqual)) {
-      Token equals = Previous;
+//      Token equals = Previous;
       Expr value = Assignment();
       if (expr is VariableExpr) {
         var name = expr.Name;
@@ -264,8 +264,7 @@ class AstParser {
       } else if (expr is GetExpr) {
         return Expr.Set(expr.Obj, expr.Name, value);
       }
-      ErrorAt(expr.Status ?? equals.Status,
-          "Diesem Ausdruck kann kein Wert zugewiesen werden.");
+      ErrorAt(expr.Status, "Diesem Ausdruck kann kein Wert zugewiesen werden.");
     }
     return expr;
   }
@@ -346,7 +345,9 @@ class AstParser {
   }
 
   Expr Call() {
+    var status = CurrentInputStatus;
     Expr expr = Primary();
+    expr.Status = status;
     while (true) {
       if (Match(TokenType.TokenLeftParen)) {
         expr = FinishCall(expr, null);
