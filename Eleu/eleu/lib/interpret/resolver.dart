@@ -294,6 +294,7 @@ class Resolver implements ExprVisitor<Object?>, StmtVisitor<Object?> {
     loopLevel++;
     CheckEmptyBody(stmt.Body);
     Resolve(stmt.Body);
+    Resolve(stmt.Increment);
     loopLevel--;
     return null;
   }
