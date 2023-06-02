@@ -126,9 +126,9 @@ class AstParser {
     Consume(TokenType.TokenRightParen, "Expect ')' after for clauses.");
     Stmt body = Statement();
     condition ??= Expr.Literal(true);
-    if (increment != null) {
-      body = Stmt.Block([body, Stmt.Expression(increment)]);
-    }
+    // if (increment != null) {
+    //   body = Stmt.Block([body, Stmt.Expression(increment)]);
+    // }
     // increment is needed in case of a continue in a for-loop.
     body = Stmt.While(condition, body, increment);
     if (initializer != null) {

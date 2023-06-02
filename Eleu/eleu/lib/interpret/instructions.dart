@@ -1,6 +1,4 @@
 import 'package:eleu/interpret/stmt_compiler.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:hati/hati.dart';
 
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
@@ -234,6 +232,7 @@ enum JumpMode {
   jmp,
   jmp_true,
   jmp_false,
+  jmp_le_zero,
 }
 
 class JumpInstruction extends Instruction {
@@ -248,14 +247,48 @@ class JumpInstruction extends Instruction {
       return;
     }
     var val = vm.peek();
+
+    int? GetCount() {
+      if (val is! Number) return null;
+      if (!val.IsInt) return null;
+      return val.IntValue;
+    }
+
     switch (mode) {
       case JumpMode.jmp_true:
         if (!IsTruthy(val)) return;
       case JumpMode.jmp_false:
         if (!IsFalsey(val)) return;
+      case JumpMode.jmp_le_zero:
+        var count = GetCount();
+        if (count is! int)
+          throw EleuRuntimeError(status, "Es wird eine natürliche Zahl erwartet.");
+        if (count > 0) return;
       default:
         throw UnsupportedError("invalid jump code");
     }
     vm.frame.ip = offset;
+  }
+
+  @override
+  String toString() => "$mode $offset";
+}
+
+class AssignInstruction extends Instruction {
+  Expr lookup;
+  String name;
+
+  AssignInstruction(this.name, this.lookup) : super(lookup.Status);
+
+  @override
+  void execute(Interpreter vm) {
+    var value = vm.peek();
+    var distance = vm.locals[lookup];
+    if (distance != null) {
+      vm.environment.AssignAt(distance, name, value);
+    } else {
+      vm.globals.Assign(name, value);
+    }
+    
   }
 }

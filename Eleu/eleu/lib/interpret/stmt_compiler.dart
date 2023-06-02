@@ -1,3 +1,5 @@
+import 'package:eleu/scanning.dart';
+
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
 import '../types.dart';
@@ -12,6 +14,7 @@ class Chunk {
 
 class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   Chunk chunk = Chunk();
+  List<JumpInstruction> breakContinues = [];
 
   Chunk compile(List<Stmt> stmts) {
     for (var stmt in stmts) {
@@ -32,12 +35,14 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
       s.Accept(this);
     }
     chunk.add(ScopeInstruction(false));
-    // TODO: implement VisitBlockStmt
   }
 
   @override
   void VisitBreakContinueStmt(BreakContinueStmt stmt) {
-    // TODO: implement VisitBreakContinueStmt
+    var jump = JumpInstruction(
+        stmt.IsBreak ? JumpMode.jmp_true : JumpMode.jmp_false, stmt.Status);
+    breakContinues.add(jump);
+    chunk.add(jump);
   }
 
   @override
@@ -73,7 +78,30 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitRepeatStmt(RepeatStmt stmt) {
-    //stmt.Accept(this);
+    var oldBreaks = breakContinues;
+    breakContinues = [];
+    stmt.Count.Accept(this);
+    int repeatIndex = chunk.length;
+    var endJump = JumpInstruction(JumpMode.jmp_le_zero, stmt.Count.Status);
+    chunk.add(endJump);
+    stmt.Body.Accept(this);
+    int incrPos = chunk.length;
+    chunk.add(PushInstruction(Number(1), stmt.Count.Status));
+    chunk.add(BinaryOpInstruction(TokenType.TokenMinus, stmt.Count.Status));
+    chunk.add(JumpInstruction(JumpMode.jmp, stmt.Count.Status)..offset = repeatIndex);
+    endJump.offset = chunk.length;
+    patchBreakContinues(endJump.offset, incrPos);
+    breakContinues = oldBreaks;
+  }
+
+  void patchBreakContinues(int breakOfs, int continueOfs) {
+    for (var jmp in breakContinues) {
+      if (jmp.mode == JumpMode.jmp_true)
+        jmp.offset = breakOfs;
+      else
+        jmp.offset = continueOfs;
+      jmp.mode = JumpMode.jmp;
+    }
   }
 
   @override
@@ -90,12 +118,27 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitWhileStmt(WhileStmt stmt) {
-    // TODO: implement VisitWhileStmt
+    var oldBreaks = breakContinues;
+    breakContinues = [];
+    int loopStart = chunk.length;
+    stmt.Condition.Accept(this);
+    var exitJump = JumpInstruction(JumpMode.jmp_false, stmt.Condition.Status);
+    chunk.add(exitJump);
+    chunk.add(PopInstruction(stmt.Condition.Status));
+    stmt.Body.Accept(this);
+    int incrementOfs = chunk.length;
+    if (stmt.Increment != null) {
+      stmt.Increment!.Accept(this);
+    }
+
+    //patchBreakContinues(endJump.offset, incrementOfs);
+    breakContinues = oldBreaks;
   }
 
   @override
   void VisitAssignExpr(AssignExpr expr) {
-    // TODO: implement VisitAssignExpr
+    expr.Value.Accept(this);
+    chunk.add(AssignInstruction(expr.Name, expr));
   }
 
   @override

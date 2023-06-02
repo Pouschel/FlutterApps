@@ -81,15 +81,16 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult Interpret() {
-    var res = start();
-    while (res == EEleuResult.NextStep) {
-      res = step();
-    }
-    return res;
-    // Execute = ExecuteRelease;
-    // return DoInterpret();
+    // var res = start();
+    // while (res == EEleuResult.NextStep) {
+    //   res = step();
+    // }
+    // return res;
+    Execute = ExecuteRelease;
+    return DoInterpret();
   }
 
+  
   EEleuResult start() {
     EEleuResult result = EEleuResult.Ok;
     try {
@@ -111,14 +112,18 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     return result;
   }
 
+  void leaveFrame() {
+    frame = frame.next!;
+    environment = prevEnvs.removeLast();
+    frameDepth--;
+  }
+
   EEleuResult step() {
     var ins = frame.nextInstruction();
     if (ins == null) {
       if (frame.next == null) return EEleuResult.Ok;
       // leave current chunk function
-      frame = frame.next!;
-      environment = prevEnvs.removeLast();
-      frameDepth--;
+      leaveFrame();
       return EEleuResult.NextStep;
     }
 
@@ -134,6 +139,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     } on RangeError catch (ex) {
       var msg = "${currentStatus.Message}: ${ex.runtimeType}";
       options.Err.WriteLine(msg);
+      return EEleuResult.RuntimeError;
     }
     return EEleuResult.NextStep;
   }
@@ -511,14 +517,15 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     var result = InterpretResult.NilResult;
     while (IsTruthy(Evaluate(stmt.Condition))) {
       result = Execute(stmt.Body);
-      if (result.Stat == InterpretStatus.Continue) {
-        if (stmt.Increment != null) Evaluate(stmt.Increment!);
-        continue;
-      }
       if (result.Stat == InterpretStatus.Break) {
         result = InterpretResult.NilResult;
         break;
       }
+      if (result.Stat == InterpretStatus.Continue || result.Stat == InterpretStatus.Normal) {
+        if (stmt.Increment != null) Evaluate(stmt.Increment!);
+        continue;
+      }
+
       if (result.Stat != InterpretStatus.Normal) break;
     }
     return result;
