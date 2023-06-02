@@ -13,8 +13,6 @@ import '../types.dart';
 import 'interpreting.dart';
 import 'resolver.dart';
 
-
-
 class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   EleuOptions options;
   InputStatus currentStatus = InputStatus.Empty;
@@ -33,8 +31,9 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   Stack<CallStackInfo> callStack = Stack();
   final List<Token> orgTokens;
   int MaxStackDepth = 200;
-
   int ExecutedInstructionCount = 0;
+
+  Object lastValue = NilValue;
 
   Interpreter(this.options, this.statements, this.orgTokens) {
     NativeFunctions.DefineAll(this);

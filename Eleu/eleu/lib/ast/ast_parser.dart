@@ -7,10 +7,11 @@ import 'ast_expr.dart';
 import 'ast_stmt.dart';
 
 abstract class ExprStmtBase {
-  InputStatus? Status;
+  InputStatus Status=InputStatus();
 
+  
   @override
-  String toString() => Status != null ? Status.toString() : "a ${this.runtimeType}";
+  String toString() =>  Status.toString();
 }
 
 class AstParser {
