@@ -70,7 +70,11 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitVarStmt(VarStmt stmt) {
-    // TODO: implement VisitVarStmt
+    if (stmt.Initializer != null)
+      stmt.Initializer!.Accept(this);
+    else
+      chunk.add(PushInstruction(NilValue, stmt.Status));
+    chunk.add(VarDefInstruction(stmt.Name, stmt.Status));
   }
 
   @override

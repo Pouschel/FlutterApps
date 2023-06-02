@@ -1,3 +1,4 @@
+import 'dart:core';
 import 'dart:math';
 
 import 'package:eleu/interpret/instructions.dart';
@@ -51,9 +52,13 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   void push(Object o) => valueStack.add(o);
   void peek() => valueStack[valueStack.length - 1];
   Object pop() => valueStack.removeLast();
+  int frameDepth = 0;
   void enterFrame(CallFrame newFrame) {
     newFrame.next = frame;
     frame = newFrame;
+    frameDepth++;
+    if (frameDepth >= MaxStackDepth)
+      throw EleuRuntimeError(currentStatus, "Zu viele verschachtelte Funktionsaufrufe.");
   }
 
   void NotifyPuzzleChange(Puzzle? newPuzzle) {
@@ -96,9 +101,9 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       var stat = ex.Status ?? currentStatus;
       var msg = "${stat.Message}: ${ex.Message}";
       options.Err.WriteLine(msg);
-      //print(msg);
       result = EEleuResult.RuntimeError;
     }
+
     return result;
   }
 
@@ -109,6 +114,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       // leave current chunk function
       frame = frame.next!;
       environment = prevEnvs.removeLast();
+      frameDepth--;
       return EEleuResult.NextStep;
     }
 
@@ -121,6 +127,9 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       var msg = "${stat.Message}: ${ex.Message}";
       options.Err.WriteLine(msg);
       return EEleuResult.RuntimeError;
+    } on RangeError catch (ex) {
+      var msg = "${currentStatus.Message}: ${ex.runtimeType}";
+      options.Err.WriteLine(msg);
     }
     return EEleuResult.NextStep;
   }
@@ -181,7 +190,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     var distance = locals[expr];
     if (distance != null) {
       return environment.GetAt(name, distance);
-      
     } else {
       return globals.Lookup(name);
     }

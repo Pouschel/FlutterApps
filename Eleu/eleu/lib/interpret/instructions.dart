@@ -50,7 +50,8 @@ class PushInstruction extends Instruction {
     vm.push(value);
   }
 
-  @override String toString() => "push $value";
+  @override
+  String toString() => "push $value";
 }
 
 class PopInstruction extends Instruction {
@@ -61,7 +62,8 @@ class PopInstruction extends Instruction {
     vm.pop();
   }
 
-  @override String toString() => "pop";
+  @override
+  String toString() => "pop";
 }
 
 class BinaryOpInstruction extends Instruction {
@@ -103,7 +105,8 @@ class BinaryOpInstruction extends Instruction {
     vm.push(result);
   }
 
-   @override String toString() => "op $op";
+  @override
+  String toString() => "op $op";
 }
 
 class CallInstruction extends Instruction {
@@ -164,11 +167,12 @@ class CallInstruction extends Instruction {
     vm.push(res);
   }
 
-   @override String toString() => "call/$nArgs";
+  @override
+  String toString() => "call/$nArgs";
 }
 
 // class ReturnInstruction extends Instruction {
-  
+
 //   ReturnInstruction(this.value, InputStatus? status) : super(status);
 //   @override
 //   void execute(Interpreter vm) {
@@ -196,5 +200,18 @@ class LookupInClosure extends Instruction {
   @override
   void execute(Interpreter vm) {
     vm.push(closure.GetAt(name, 0));
+  }
+}
+
+class VarDefInstruction extends Instruction {
+  String name;
+  VarDefInstruction(this.name, InputStatus status) : super(status);
+  @override
+  void execute(Interpreter vm) {
+    if (vm.environment.ContainsAtDistance0(name))
+      throw EleuRuntimeError(
+          status, "Mehrfache var-Anweisung: '${name}' wurde bereits deklariert!");
+    var value = vm.pop();
+    vm.environment.Define(name, value);
   }
 }
