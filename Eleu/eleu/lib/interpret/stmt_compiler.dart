@@ -1,8 +1,3 @@
-import 'package:eleu/eleu.dart';
-import 'package:eleu/interpret/interpreter.dart';
-import 'package:eleu/interpret/interpreting.dart';
-import 'package:eleu/scanning.dart';
-
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
 import '../types.dart';
@@ -12,6 +7,7 @@ class Chunk {
   List<Instruction> code = [];
 
   void add(Instruction ins) => code.add(ins);
+  int get length => code.length;
 }
 
 class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
@@ -31,6 +27,11 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitBlockStmt(BlockStmt stmt) {
+    chunk.add(ScopeInstruction(true));
+    for (var s in stmt.Statements) {
+      s.Accept(this);
+    }
+    chunk.add(ScopeInstruction(false));
     // TODO: implement VisitBlockStmt
   }
 
@@ -57,12 +58,22 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitIfStmt(IfStmt stmt) {
-    // TODO: implement VisitIfStmt
+    stmt.Condition.Accept(this);
+    var thenJump = JumpInstruction(JumpMode.jmp_false, stmt.Condition.Status);
+    chunk.add(thenJump);
+    chunk.add(PopInstruction(stmt.Condition.Status));
+    stmt.ThenBranch.Accept(this);
+    var elseJump = JumpInstruction(JumpMode.jmp, stmt.ThenBranch.Status);
+    chunk.add(elseJump);
+    thenJump.offset = chunk.length;
+    chunk.add(PopInstruction(stmt.ThenBranch.Status));
+    if (stmt.ElseBranch != null) stmt.ElseBranch!.Accept(this);
+    elseJump.offset = chunk.length;
   }
 
   @override
   void VisitRepeatStmt(RepeatStmt stmt) {
-    // TODO: implement VisitRepeatStmt
+    //stmt.Accept(this);
   }
 
   @override

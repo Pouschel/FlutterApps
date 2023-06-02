@@ -47,10 +47,14 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     Execute = ExecuteRelease;
   }
 
-  void enterEnv(EleuEnvironment env) => prevEnvs.add(env);
+  void enterEnv(EleuEnvironment env) {
+    prevEnvs.add(environment);
+    environment = env;
+  }
+
   void leaveEnv() => environment = prevEnvs.removeLast();
   void push(Object o) => valueStack.add(o);
-  void peek() => valueStack[valueStack.length - 1];
+  Object peek() => valueStack[valueStack.length - 1];
   Object pop() => valueStack.removeLast();
   int frameDepth = 0;
   void enterFrame(CallFrame newFrame) {

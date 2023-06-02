@@ -1,4 +1,5 @@
 import 'package:eleu/interpret/stmt_compiler.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:hati/hati.dart';
 
 import '../ast/ast_expr.dart';
@@ -213,5 +214,48 @@ class VarDefInstruction extends Instruction {
           status, "Mehrfache var-Anweisung: '${name}' wurde bereits deklariert!");
     var value = vm.pop();
     vm.environment.Define(name, value);
+  }
+}
+
+class ScopeInstruction extends Instruction {
+  bool begin;
+  ScopeInstruction(this.begin) : super(null);
+  @override
+  void execute(Interpreter vm) {
+    if (begin) {
+      var env = EleuEnvironment(vm.environment);
+      vm.enterEnv(env);
+    } else
+      vm.leaveEnv();
+  }
+}
+
+enum JumpMode {
+  jmp,
+  jmp_true,
+  jmp_false,
+}
+
+class JumpInstruction extends Instruction {
+  late int offset;
+  JumpMode mode = JumpMode.jmp;
+
+  JumpInstruction(this.mode, InputStatus status) : super(status);
+  @override
+  void execute(Interpreter vm) {
+    if (mode == JumpMode.jmp) {
+      vm.frame.ip = offset;
+      return;
+    }
+    var val = vm.peek();
+    switch (mode) {
+      case JumpMode.jmp_true:
+        if (!IsTruthy(val)) return;
+      case JumpMode.jmp_false:
+        if (!IsFalsey(val)) return;
+      default:
+        throw UnsupportedError("invalid jump code");
+    }
+    vm.frame.ip = offset;
   }
 }
