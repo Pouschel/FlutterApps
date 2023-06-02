@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:eleu/interpret/stmt_compiler.dart';
 import 'package:hati/hati.dart';
 
 import '../ast/ast_expr.dart';
@@ -34,6 +35,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   int ExecutedInstructionCount = 0;
 
   Object lastValue = NilValue;
+  late Chunk chunk;
 
   Interpreter(this.options, this.statements, this.orgTokens) {
     NativeFunctions.DefineAll(this);
@@ -59,8 +61,49 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult Interpret() {
-    Execute = ExecuteRelease;
-    return DoInterpret();
+    var res = start();
+    while (res == EEleuResult.NextStep) {
+      res = step();
+    }
+    return res;
+    // Execute = ExecuteRelease;
+    // return DoInterpret();
+  }
+
+  EEleuResult start() {
+    EEleuResult result = EEleuResult.Ok;
+    try {
+      locals = Map.identity();
+      callStack = Stack();
+      Resolve();
+      ExecutedInstructionCount = 0;
+      lastValue = NilValue;
+      chunk = StmtCompiler().compile(this.statements);
+      return EEleuResult.NextStep;
+    } on EleuRuntimeError catch (ex) {
+      if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
+      var stat = ex.Status ?? currentStatus;
+      var msg = "${stat.Message}: ${ex.Message}";
+      options.Err.WriteLine(msg);
+      //print(msg);
+      result = EEleuResult.RuntimeError;
+    }
+    return result;
+  }
+
+  EEleuResult step() {
+    var ins = chunk.nextInstruction();
+    if (ins == null) return EEleuResult.Ok;
+    try {
+      ins.execute(this);
+    } on EleuRuntimeError catch (ex) {
+      if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
+      var stat = ex.Status ?? currentStatus;
+      var msg = "${stat.Message}: ${ex.Message}";
+      options.Err.WriteLine(msg);
+      return EEleuResult.RuntimeError;
+    }
+    return EEleuResult.NextStep;
   }
 
   EEleuResult DoInterpret() {
