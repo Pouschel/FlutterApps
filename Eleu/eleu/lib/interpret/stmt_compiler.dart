@@ -10,15 +10,8 @@ import 'instructions.dart';
 
 class Chunk {
   List<Instruction> code = [];
-  int ip = 0;
 
   void add(Instruction ins) => code.add(ins);
-  void reset() => ip = 0;
-
-  Instruction? nextInstruction() {
-    if (ip >= code.length) return null;
-    return code[ip++];
-  }
 }
 
 class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
@@ -59,7 +52,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitFunctionStmt(FunctionStmt stmt) {
-    // TODO: implement VisitFunctionStmt
+    chunk.add(DefFunInstruction(stmt));
   }
 
   @override

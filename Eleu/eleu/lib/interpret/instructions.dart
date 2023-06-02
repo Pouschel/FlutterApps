@@ -1,3 +1,6 @@
+import 'package:eleu/interpret/stmt_compiler.dart';
+import 'package:hati/hati.dart';
+
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
 import '../eleu.dart';
@@ -6,16 +9,30 @@ import '../types.dart';
 import 'interpreter.dart';
 import 'interpreting.dart';
 
+class CallFrame {
+  int ip = 0;
+  Chunk chunk;
+  ICallable? func;
+  CallFrame? next;
+
+  CallFrame(this.chunk, {this.func});
+
+  Instruction? nextInstruction() {
+    if (ip >= chunk.code.length) return null;
+    return chunk.code[ip++];
+  }
+}
+
 abstract class Instruction {
-  InputStatus status;
+  InputStatus? status;
   void execute(Interpreter vm);
 
   Instruction(this.status);
 }
 
-class FunctionInstruction extends Instruction {
+class DefFunInstruction extends Instruction {
   FunctionStmt func;
-  FunctionInstruction(this.func) : super(func.Status);
+  DefFunInstruction(this.func) : super(func.Status);
 
   @override
   void execute(Interpreter vm) {
@@ -26,12 +43,14 @@ class FunctionInstruction extends Instruction {
 
 class PushInstruction extends Instruction {
   Object value;
-  PushInstruction(this.value, InputStatus stat) : super(stat);
+  PushInstruction(this.value, InputStatus? stat) : super(stat);
 
   @override
   void execute(Interpreter vm) {
     vm.push(value);
   }
+
+  @override String toString() => "push $value";
 }
 
 class PopInstruction extends Instruction {
@@ -41,6 +60,8 @@ class PopInstruction extends Instruction {
   void execute(Interpreter vm) {
     vm.pop();
   }
+
+  @override String toString() => "pop";
 }
 
 class BinaryOpInstruction extends Instruction {
@@ -81,6 +102,8 @@ class BinaryOpInstruction extends Instruction {
     }
     vm.push(result);
   }
+
+   @override String toString() => "op $op";
 }
 
 class CallInstruction extends Instruction {
@@ -90,11 +113,21 @@ class CallInstruction extends Instruction {
   @override
   void execute(Interpreter vm) {
     var callee = vm.pop();
-    if (callee is! ICallable) {
-      throw EleuRuntimeError(status, "Can only call functions and classes.");
-    }
     if (callee is NativeFunction) {
       executeNative(vm, callee);
+      return;
+    }
+    if (callee is! IChunkCompilable)
+      throw EleuRuntimeError(status, "Can only call functions and classes.");
+    if (callee is EleuFunction) {
+      var environment = EleuEnvironment(callee.closure);
+      for (int i = nArgs - 1; i >= 0; i--) {
+        environment.Define(callee.declaration.Paras[i].StringValue, vm.pop());
+      }
+      vm.enterEnv(environment);
+      var frame = CallFrame(callee.compiledChunk, func: callee);
+      vm.enterFrame(frame);
+
       return;
     }
     throw UnsupportedError("message");
@@ -130,7 +163,19 @@ class CallInstruction extends Instruction {
     var res = callee.Call(vm, arguments.reversed.toList());
     vm.push(res);
   }
+
+   @override String toString() => "call/$nArgs";
 }
+
+// class ReturnInstruction extends Instruction {
+  
+//   ReturnInstruction(this.value, InputStatus? status) : super(status);
+//   @override
+//   void execute(Interpreter vm) {
+//     vm.frame = vm.frame.next!;
+//     vm.push(value);
+//   }
+// }
 
 class LookupVarInstruction extends Instruction {
   String name;
@@ -141,5 +186,15 @@ class LookupVarInstruction extends Instruction {
   void execute(Interpreter vm) {
     var value = vm.LookUpVariable(name, vexp);
     vm.push(value);
+  }
+}
+
+class LookupInClosure extends Instruction {
+  EleuEnvironment closure;
+  String name;
+  LookupInClosure(this.closure, this.name) : super(null);
+  @override
+  void execute(Interpreter vm) {
+    vm.push(closure.GetAt(name, 0));
   }
 }

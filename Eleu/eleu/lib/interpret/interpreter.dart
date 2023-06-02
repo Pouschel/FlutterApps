@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:eleu/interpret/instructions.dart';
 import 'package:eleu/interpret/stmt_compiler.dart';
 import 'package:hati/hati.dart';
 
@@ -34,9 +35,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   final List<Token> orgTokens;
   int MaxStackDepth = 200;
   int ExecutedInstructionCount = 0;
-
-  List<Chunk> chunks = [];
-  late Chunk chunk;
+  late CallFrame frame;
   List<Object> valueStack = [];
 
   Interpreter(this.options, this.statements, this.orgTokens) {
@@ -47,17 +46,15 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     Execute = ExecuteRelease;
   }
 
-  void enterChunk(Chunk newChunk) {
-    chunks.add(this.chunk);
-    chunk = newChunk;
-  }
-
-  void leaveChunk() => chunk = chunks.removeLast();
   void enterEnv(EleuEnvironment env) => prevEnvs.add(env);
   void leaveEnv() => environment = prevEnvs.removeLast();
   void push(Object o) => valueStack.add(o);
   void peek() => valueStack[valueStack.length - 1];
   Object pop() => valueStack.removeLast();
+  void enterFrame(CallFrame newFrame) {
+    newFrame.next = frame;
+    frame = newFrame;
+  }
 
   void NotifyPuzzleChange(Puzzle? newPuzzle) {
     if (PuzzleChanged != null) PuzzleChanged!(newPuzzle);
@@ -91,7 +88,8 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       callStack = Stack();
       Resolve();
       ExecutedInstructionCount = 0;
-      chunk = StmtCompiler().compile(this.statements);
+      var chunk = StmtCompiler().compile(this.statements);
+      frame = CallFrame(chunk);
       return EEleuResult.NextStep;
     } on EleuRuntimeError catch (ex) {
       if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
@@ -105,10 +103,17 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult step() {
-    var ins = chunk.nextInstruction();
-    if (ins == null) return EEleuResult.Ok;
+    var ins = frame.nextInstruction();
+    if (ins == null) {
+      if (frame.next == null) return EEleuResult.Ok;
+      // leave current chunk function
+      frame = frame.next!;
+      environment = prevEnvs.removeLast();
+      return EEleuResult.NextStep;
+    }
+
     try {
-      currentStatus = ins.status;
+      if (ins.status != null) currentStatus = ins.status!;
       ins.execute(this);
     } on EleuRuntimeError catch (ex) {
       if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
@@ -176,6 +181,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     var distance = locals[expr];
     if (distance != null) {
       return environment.GetAt(name, distance);
+      
     } else {
       return globals.Lookup(name);
     }

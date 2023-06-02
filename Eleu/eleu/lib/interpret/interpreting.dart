@@ -1,5 +1,3 @@
-import 'package:eleu/interpret/stmt_compiler.dart';
-
 import '../native.dart';
 import '../eleu.dart';
 import '../types.dart';

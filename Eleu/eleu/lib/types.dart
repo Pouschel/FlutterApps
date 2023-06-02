@@ -2,6 +2,7 @@
 
 import 'dart:collection';
 import 'package:eleu/ast/ast_stmt.dart';
+import 'package:eleu/interpret/instructions.dart';
 import 'package:hati/hati.dart';
 import 'package:intl/intl.dart';
 
@@ -18,6 +19,10 @@ abstract class ICallable {
   Object Call(Interpreter interpreter, List<Object> arguments);
   int get Arity => 0;
   String get Name => "";
+}
+
+abstract class IChunkCompilable {
+  Chunk get compiledChunk;
 }
 
 class Number {
@@ -99,11 +104,11 @@ class NativeFunction implements ICallable {
   String toString() => "<native function>";
 }
 
-class EleuFunction implements ICallable {
+class EleuFunction implements ICallable, IChunkCompilable {
   final FunctionStmt declaration;
   final EleuEnvironment closure;
   final bool isInitializer;
-  Chunk? chunk;
+  Chunk? _chunk;
 
   EleuFunction(this.declaration, this.closure, this.isInitializer);
 
@@ -132,7 +137,19 @@ class EleuFunction implements ICallable {
     return EleuFunction(declaration, environment, isInitializer);
   }
 
-  
+  @override
+  Chunk get compiledChunk {
+    if (_chunk == null) {
+      var compiler = StmtCompiler();
+      var chunk = compiler.compile(declaration.Body);
+      if (isInitializer) {
+        chunk.add(LookupInClosure(closure, "this"));
+      } else
+        chunk.add(PushInstruction(NilValue, null));
+      _chunk = chunk;
+    }
+    return _chunk!;
+  }
 }
 
 class EleuClass implements ICallable {
