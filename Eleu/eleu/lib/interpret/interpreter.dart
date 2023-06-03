@@ -29,7 +29,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   List<EleuEnvironment> prevEnvs = [];
   late EleuEnvironment environment;
   bool Function(Stmt)? canContinueFunc;
-  late InterpretResult Function(Stmt) Execute;
+  //late InterpretResult Function(Stmt) Execute;
 
   Stack<CallStackInfo> callStack = Stack();
   final List<Token> orgTokens;
@@ -43,7 +43,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     PuzzleFunctions.DefineAll(this);
     this.environment = globals;
     globals.Define("PI", Number(pi));
-    Execute = ExecuteRelease;
+    //Execute = ExecuteRelease;
   }
 
   void enterEnv(EleuEnvironment env) {
@@ -68,7 +68,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     if (PuzzleChanged != null) PuzzleChanged!(newPuzzle);
   }
 
-  InterpretResult ExecuteRelease(Stmt stmt) {
+  InterpretResult Execute(Stmt stmt) {
     return stmt.Accept(this);
   }
 
@@ -79,13 +79,14 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     globals.Define(name, ofun);
   }
 
-  EEleuResult Interpret() {
-    var res = start();
-    while (res == EEleuResult.NextStep) {
-      res = step();
+  EEleuResult Interpret(bool useVm) {
+    if (useVm) {
+      var res = start();
+      while (res == EEleuResult.NextStep) {
+        res = step();
+      }
+      return res;
     }
-    return res;
-    Execute = ExecuteRelease;
     return DoInterpret();
   }
 
@@ -373,7 +374,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   Object VisitGetExpr(GetExpr expr) {
     var obj = Evaluate(expr.Obj);
     if (obj is EleuInstance) {
-      return obj.Get(expr.Name,false);
+      return obj.Get(expr.Name, false);
     }
     throw Error("Only instances have properties.");
   }
@@ -472,7 +473,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     if (method == NilValue) {
       throw Error("Undefined property '${expr.Method}'.");
     }
-    return (method as EleuFunction).bind(obj,false);
+    return (method as EleuFunction).bind(obj, false);
   }
 
   @override

@@ -29,7 +29,7 @@ List<Stmt> ScanAndParse(String source, String fileName, EleuOptions options) {
 EEleuResult CompileAndRunAst(String source, String fileName, EleuOptions options) {
   var (res, vm) = Compile(source, fileName, options);
   if (res != EEleuResult.Ok) return res;
-  return vm!.Interpret();
+  return vm!.Interpret(!options.UseInterpreter);
 }
 
 (EEleuResult, Interpreter?) Compile(
@@ -80,7 +80,7 @@ class EleuOptions {
   TextWriter Out = TextWriter.Null;
   TextWriter Err = TextWriter.Null;
   bool PrintByteCode = false;
-  bool UseInterpreter = true;
+  bool UseInterpreter = false;
 
   void WriteCompilerError(InputStatus status, String message) {
     var msg = "${status.Message}: Cerr: ${message}";
