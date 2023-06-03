@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:eleu/scanning.dart';
 
 import '../ast/ast_expr.dart';
@@ -159,7 +157,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   @override
   void VisitAssignExpr(AssignExpr expr) {
     expr.Value.Accept(this);
-    chunk.add(AssignInstruction(expr.Name, expr.localDistance,expr.Status));
+    chunk.add(AssignInstruction(expr.Name, expr.localDistance, expr.Status));
   }
 
   @override
@@ -225,6 +223,6 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitVariableExpr(VariableExpr expr) {
-    chunk.add(LookupVarInstruction(expr.Name, expr));
+    chunk.add(LookupVarInstruction(expr.Name, expr.localDistance, expr.Status));
   }
 }

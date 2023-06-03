@@ -236,12 +236,12 @@ class CallInstruction extends Instruction {
 
 class LookupVarInstruction extends Instruction {
   String name;
-  VariableExpr vexp;
-  LookupVarInstruction(this.name, this.vexp) : super(vexp.Status);
+  int distance;
+  LookupVarInstruction(this.name, this.distance, InputStatus status) : super(status);
 
   @override
   void execute(Interpreter vm) {
-    var value = vm.LookUpVariable(name, vexp);
+    var value = vm.LookUpVariable(name, distance);
     vm.push(value);
   }
 }
@@ -336,16 +336,12 @@ class AssignInstruction extends Instruction {
   String name;
   int distance;
 
-  AssignInstruction(this.name,  this.distance, InputStatus status) : super(status);
+  AssignInstruction(this.name, this.distance, InputStatus status) : super(status);
 
   @override
   void execute(Interpreter vm) {
     var value = vm.peek();
-    if (distance >= 0) {
-      vm.environment.AssignAt(distance, name, value);
-    } else {
-      vm.globals.Assign(name, value);
-    }
+    vm.assignAtDistance(name, distance, value);
   }
 }
 

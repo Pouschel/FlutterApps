@@ -193,8 +193,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     return evaluated;
   }
 
-  object LookUpVariable(string name, Expr expr) {
-    var distance = expr.localDistance;
+  object LookUpVariable(string name, int distance) {
     if (distance >= 0) {
       return environment.GetAt(name, distance);
     } else {
@@ -238,10 +237,14 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   Object VisitAssignExpr(AssignExpr expr) {
     var value = Evaluate(expr.Value);
     var distance = expr.localDistance;
+    return assignAtDistance(expr.Name, distance, value);
+  }
+
+  Object assignAtDistance(String name, int distance, Object value) {
     if (distance >= 0) {
-      environment.AssignAt(distance, expr.Name, value);
+      environment.AssignAt(distance, name, value);
     } else {
-      globals.Assign(expr.Name, value);
+      globals.Assign(name, value);
     }
     return value;
   }
@@ -476,7 +479,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
 
   @override
   Object VisitThisExpr(ThisExpr expr) {
-    return LookUpVariable(expr.Keyword, expr);
+    return LookUpVariable(expr.Keyword, expr.localDistance);
   }
 
   @override
@@ -509,7 +512,8 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   @override
-  Object VisitVariableExpr(VariableExpr expr) => LookUpVariable(expr.Name, expr);
+  Object VisitVariableExpr(VariableExpr expr) =>
+      LookUpVariable(expr.Name, expr.localDistance);
 
   @override
   InterpretResult VisitWhileStmt(WhileStmt stmt) {
