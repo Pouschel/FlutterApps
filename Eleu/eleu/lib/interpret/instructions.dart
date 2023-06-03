@@ -373,9 +373,10 @@ class ClassInstruction extends Instruction {
 
   @override
   void execute(Interpreter vm) {
-    var superclassV = vm.pop();
+    var hasSuper = vm.pop() as bool;
     EleuClass? superclass;
-    if (superclassV != NilValue) {
+    if (hasSuper) {
+      var superclassV = vm.pop();
       if (superclassV is! EleuClass) {
         throw vm.Error("Superclass must be a class.");
       }
@@ -439,15 +440,15 @@ class SuperInstruction extends Instruction {
   int distance;
   string name;
 
-  SuperInstruction(this.name, this.distance, InputStatus status):super(status);
+  SuperInstruction(this.name, this.distance, InputStatus status) : super(status);
   @override
   void execute(Interpreter vm) {
     EleuClass superclass = vm.environment.GetAt("super", distance) as EleuClass;
     EleuInstance obj = vm.environment.GetAt("this", distance - 1) as EleuInstance;
     var method = superclass.FindMethod(name);
     if (method is! EleuFunction) {
-      throw  vm.Error("Undefined property '${name}'.");
+      throw vm.Error("Undefined property '${name}'.");
     }
-    vm.push( method.bind(obj, true));
+    vm.push(method.bind(obj, true));
   }
 }

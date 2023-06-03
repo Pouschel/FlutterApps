@@ -32,8 +32,9 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     if (!stmt.isErrorAssert) {
       stmt.expression.Accept(this);
       emit(AssertInstruction(stmt.Status));
+      return;
     }
-
+    // throw EleuRuntimeError(stmt.Status, "assert break not supported");
     // TODO: assert break
   }
 
@@ -61,8 +62,9 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   void VisitClassStmt(ClassStmt stmt) {
     if (stmt.Superclass != null) {
       stmt.Superclass!.Accept(this);
+      emit(PushInstruction(true, stmt.Status));
     } else
-      emit(PushInstruction(NilValue, stmt.Status));
+      emit(PushInstruction(false, stmt.Status));
     emit(ClassInstruction(stmt.Name, stmt.Methods, stmt.Status));
   }
 
@@ -222,7 +224,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   void VisitSuperExpr(SuperExpr expr) {
     var distance = expr.localDistance;
     if (distance < 0) distance = 0;
-    emit(SuperInstruction(expr.Method,distance,expr.Status));
+    emit(SuperInstruction(expr.Method, distance, expr.Status));
   }
 
   @override
