@@ -222,7 +222,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitThisExpr(ThisExpr expr) {
-    // TODO: implement VisitThisExpr
+    emit(LookupVarInstruction(expr.Keyword, expr.localDistance, expr.Status));
   }
 
   @override

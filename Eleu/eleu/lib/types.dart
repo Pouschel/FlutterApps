@@ -152,13 +152,14 @@ class EleuFunction implements ICallable, IChunkCompilable {
   }
 }
 
-class EleuClass implements ICallable {
+class EleuClass implements ICallable, IChunkCompilable {
   final String _name;
   @override
   String get Name => _name;
-
   OTable Methods = OTable();
   EleuClass? Superclass;
+  Chunk? _chunk;
+
   EleuClass(this._name, this.Superclass);
 
   @override
@@ -176,6 +177,27 @@ class EleuClass implements ICallable {
       initializer.bind(instance).Call(interpreter, arguments);
     }
     return instance;
+  }
+
+  Chunk _compileChunk() {
+    var instance = EleuInstance(this);
+    var compiler = StmtCompiler();
+    compiler.emit(PushInstruction(instance, null));
+
+
+    // var environment = EleuEnvironment(closure);
+    // environment.Define("this", instance);
+
+    // var chunk = compiler.compile(declaration.Body);
+
+    // chunk.add (LookupInClosure(closure, "this"));
+    return compiler.chunk;
+  }
+
+  @override
+  Chunk get compiledChunk {
+    _chunk ??= _compileChunk();
+    return _chunk!;
   }
 
   Object FindMethod(String name) {

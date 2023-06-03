@@ -188,6 +188,27 @@ class CallInstruction extends Instruction {
       vm.enterFrame(frame);
       return;
     }
+    if (callee is EleuClass) {
+      var instance = EleuInstance(callee);
+      vm.push(instance);
+      var initializer = callee.FindMethod("init");
+      if (initializer is! EleuFunction) return;
+      var prevEnv = vm.environment;
+      if (initializer is EleuFunction) {
+        prevEnv = initializer.closure;
+      }
+      var environment = EleuEnvironment(prevEnv);
+      if (initializer is EleuFunction) {
+        for (int i = nArgs - 1; i >= 0; i--) {
+          environment.Define(initializer.declaration.Paras[i].StringValue, vm.pop());
+        }
+      }
+      environment.Define("this", instance);
+      vm.enterEnv(environment);
+      var frame = CallFrame(callee.compiledChunk);
+      vm.enterFrame(frame);
+      return;
+    }
     throw UnsupportedError("message");
   }
 
@@ -399,6 +420,7 @@ class GetInstruction extends Instruction {
     if (obj is EleuInstance) {
       var val = obj.Get(name);
       vm.push(val);
+      return;
     }
     throw EleuRuntimeError(status, "Only instances have properties.");
   }
@@ -406,7 +428,7 @@ class GetInstruction extends Instruction {
 
 class SetInstruction extends Instruction {
   String name;
-  SetInstruction(this.name, InputStatus status):super(status);
+  SetInstruction(this.name, InputStatus status) : super(status);
   @override
   void execute(Interpreter vm) {
     var obj = vm.pop();
