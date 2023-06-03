@@ -28,7 +28,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   EleuEnvironment globals = EleuEnvironment(null);
   List<EleuEnvironment> prevEnvs = [];
   late EleuEnvironment environment;
-  //Map<Expr, int> locals = Map.identity();
   bool Function(Stmt)? canContinueFunc;
   late InterpretResult Function(Stmt) Execute;
 
@@ -81,13 +80,13 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult Interpret() {
-    // var res = start();
-    // while (res == EEleuResult.NextStep) {
-    //   res = step();
-    // }
-    // return res;
-    Execute = ExecuteRelease;
-    return DoInterpret();
+    var res = start();
+    while (res == EEleuResult.NextStep) {
+      res = step();
+    }
+    return res;
+    // Execute = ExecuteRelease;
+    // return DoInterpret();
   }
 
   EEleuResult start() {

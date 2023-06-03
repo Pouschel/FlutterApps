@@ -120,7 +120,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
       stmt.Value!.Accept(this);
     else
       chunk.add(PushInstruction(NilValue, stmt.Keyword.Status));
-    chunk.add(ReturnInstruction(stmt.Status));
+    chunk.add(ReturnInstruction(this.scopeDepth, stmt.Status));
   }
 
   @override

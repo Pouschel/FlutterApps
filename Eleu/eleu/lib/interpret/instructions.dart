@@ -1,6 +1,5 @@
 import 'package:eleu/interpret/stmt_compiler.dart';
 
-import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
 import '../eleu.dart';
 import '../scanning.dart';
@@ -346,9 +345,13 @@ class AssignInstruction extends Instruction {
 }
 
 class ReturnInstruction extends Instruction {
-  ReturnInstruction(InputStatus status) : super(status);
+  int scopeDepth = 0;
+  ReturnInstruction(this.scopeDepth, InputStatus status) : super(status);
   @override
   void execute(Interpreter vm) {
+    for (var i = 0; i < scopeDepth; i++) {
+      vm.leaveEnv();
+    }
     vm.leaveFrame();
   }
 }
