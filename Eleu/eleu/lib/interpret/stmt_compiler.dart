@@ -16,6 +16,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   Chunk chunk = Chunk();
   List<JumpInstruction> breakContinues = [];
   int scopeDepth = 0;
+  bool isInitializer = false;
 
   Chunk compile(List<Stmt> stmts) {
     for (var stmt in stmts) {
@@ -123,10 +124,12 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitReturnStmt(ReturnStmt stmt) {
-    if (stmt.Value != null)
-      stmt.Value!.Accept(this);
-    else
-      emit(PushInstruction(NilValue, stmt.Keyword.Status));
+    if (!isInitializer) {
+      if (stmt.Value != null)
+        stmt.Value!.Accept(this);
+      else
+        emit(PushInstruction(NilValue, stmt.Keyword.Status));
+    }
     emit(ReturnInstruction(this.scopeDepth, stmt.Status));
   }
 
@@ -222,7 +225,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitThisExpr(ThisExpr expr) {
-    emit(LookupVarInstruction(expr.Keyword, expr.localDistance, expr.Status));
+    // distance 1 to high from resolver?
+    emit(LookupVarInstruction(expr.Keyword, expr.localDistance , expr.Status));
   }
 
   @override

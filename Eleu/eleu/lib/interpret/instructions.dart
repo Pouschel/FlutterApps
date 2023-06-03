@@ -173,43 +173,38 @@ class CallInstruction extends Instruction {
       executeNative(vm, callee);
       return;
     }
-    if (callee is! IChunkCompilable)
-      throw vm.Error("Can only call functions and classes.");
-    var function = callee as ICallable;
+    if (callee is! ICallable) throw vm.Error("Can only call functions and classes.");
+    var function = callee;
     if (nArgs != function.Arity)
       throw vm.Error("Expected ${function.Arity} arguments but got ${nArgs}.");
     if (callee is EleuFunction) {
       var environment = EleuEnvironment(callee.closure);
-      for (int i = nArgs - 1; i >= 0; i--) {
-        environment.Define(callee.declaration.Paras[i].StringValue, vm.pop());
-      }
-      vm.enterEnv(environment);
-      var frame = CallFrame(callee.compiledChunk, func: callee);
-      vm.enterFrame(frame);
+      doCall(vm, environment, callee);
       return;
     }
     if (callee is EleuClass) {
-      var instance = EleuInstance(callee);
+      var cls = callee;
+      var instance = EleuInstance(cls);
       vm.push(instance);
-      var initializer = callee.FindMethod("init");
+      var initializer = cls.FindMethod("init");
       if (initializer is! EleuFunction) return;
-      var prevEnv = vm.environment;
-      if (initializer is EleuFunction) {
-        prevEnv = initializer.closure;
-      }
-      var environment = EleuEnvironment(prevEnv);
-      if (initializer is EleuFunction) {
-        for (int i = nArgs - 1; i >= 0; i--) {
-          environment.Define(initializer.declaration.Paras[i].StringValue, vm.pop());
-        }
-      }
-      environment.Define("this", instance);
-      vm.enterEnv(environment);
-      var frame = CallFrame(callee.compiledChunk);
-      vm.enterFrame(frame);
+      initializer = initializer.bind(instance,true);
+      
+      var environment = EleuEnvironment(initializer.closure);
+      // environment.Define("this", instance);
+      doCall(vm, environment, initializer);
       return;
     }
     throw UnsupportedError("message");
+  }
+
+  void doCall(Interpreter vm, EleuEnvironment environment, EleuFunction callee) {
+    for (int i = nArgs - 1; i >= 0; i--) {
+      environment.Define(callee.declaration.Paras[i].StringValue, vm.pop());
+    }
+    vm.enterEnv(environment);
+    var frame = CallFrame(callee.compiledChunk, func: callee);
+    vm.enterFrame(frame);
   }
 
   void executeNative(Interpreter vm, NativeFunction callee) {
@@ -418,11 +413,11 @@ class GetInstruction extends Instruction {
   void execute(Interpreter vm) {
     var obj = vm.pop();
     if (obj is EleuInstance) {
-      var val = obj.Get(name);
+      var val = obj.Get(name,true);
       vm.push(val);
       return;
     }
-    throw EleuRuntimeError(status, "Only instances have properties.");
+    throw vm.Error("Only instances have properties.");
   }
 }
 
@@ -433,7 +428,7 @@ class SetInstruction extends Instruction {
   void execute(Interpreter vm) {
     var obj = vm.pop();
     if (obj is! EleuInstance) {
-      throw EleuRuntimeError(status, "Only instances have fields.");
+      throw vm.Error("Only instances have fields.");
     }
     var value = vm.peek();
     obj.Set(name, value);

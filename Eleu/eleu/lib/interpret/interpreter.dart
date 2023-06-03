@@ -85,34 +85,8 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       res = step();
     }
     return res;
-    // Execute = ExecuteRelease;
-    // return DoInterpret();
-  }
-
-  EEleuResult start() {
-    EEleuResult result = EEleuResult.Ok;
-    try {
-      callStack = Stack();
-      Resolve();
-      ExecutedInstructionCount = 0;
-      var chunk = StmtCompiler().compile(this.statements);
-      frame = CallFrame(chunk);
-      return EEleuResult.NextStep;
-    } on EleuRuntimeError catch (ex) {
-      if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
-      var stat = ex.Status ?? currentStatus;
-      var msg = "${stat.Message}: ${ex.Message}";
-      options.Err.WriteLine(msg);
-      result = EEleuResult.RuntimeError;
-    }
-
-    return result;
-  }
-
-  void leaveFrame() {
-    frame = frame.next!;
-    environment = prevEnvs.removeLast();
-    frameDepth--;
+    Execute = ExecuteRelease;
+    return DoInterpret();
   }
 
   EEleuResult step() {
@@ -139,6 +113,32 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       return EEleuResult.RuntimeError;
     }
     return EEleuResult.NextStep;
+  }
+
+  EEleuResult start() {
+    EEleuResult result = EEleuResult.Ok;
+    try {
+      callStack = Stack();
+      Resolve();
+      ExecutedInstructionCount = 0;
+      var chunk = StmtCompiler().compile(this.statements);
+      frame = CallFrame(chunk);
+      return EEleuResult.NextStep;
+    } on EleuRuntimeError catch (ex) {
+      if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
+      var stat = ex.Status ?? currentStatus;
+      var msg = "${stat.Message}: ${ex.Message}";
+      options.Err.WriteLine(msg);
+      result = EEleuResult.RuntimeError;
+    }
+
+    return result;
+  }
+
+  void leaveFrame() {
+    frame = frame.next!;
+    environment = prevEnvs.removeLast();
+    frameDepth--;
   }
 
   EEleuResult DoInterpret() {
@@ -201,7 +201,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   void RegisterStatus(InputStatus? status) {
-    if (status != null) {
+    if (status != null && !status.IsEmpty) {
       currentStatus = status;
     }
   }
@@ -373,7 +373,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   Object VisitGetExpr(GetExpr expr) {
     var obj = Evaluate(expr.Obj);
     if (obj is EleuInstance) {
-      return obj.Get(expr.Name);
+      return obj.Get(expr.Name,false);
     }
     throw Error("Only instances have properties.");
   }
@@ -473,7 +473,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     if (method == NilValue) {
       throw Error("Undefined property '${expr.Method}'.");
     }
-    return (method as EleuFunction).bind(obj);
+    return (method as EleuFunction).bind(obj,false);
   }
 
   @override

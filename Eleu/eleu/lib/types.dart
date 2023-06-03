@@ -13,7 +13,12 @@ import 'interpret/stmt_compiler.dart';
 
 typedef OList = List<Object>;
 
-const Object NilValue = Object();
+class NilClass {
+  @override
+  String toString() => "nil";
+}
+
+Object NilValue = NilClass();
 
 abstract class ICallable {
   Object Call(Interpreter interpreter, List<Object> arguments);
@@ -131,34 +136,33 @@ class EleuFunction implements ICallable, IChunkCompilable {
   @override
   String toString() => "<function ${declaration.Name}>";
 
-  EleuFunction bind(EleuInstance instance) {
+  EleuFunction bind(EleuInstance instance, bool copyInstructions) {
     var environment = EleuEnvironment(closure);
     environment.Define("this", instance);
-    return EleuFunction(declaration, environment, isInitializer);
+    var func = EleuFunction(declaration, environment, isInitializer);
+    if (copyInstructions) func._chunk = this.compiledChunk;
+    return func;
   }
 
   @override
   Chunk get compiledChunk {
     if (_chunk == null) {
       var compiler = StmtCompiler();
+      compiler.isInitializer = this.isInitializer;
       var chunk = compiler.compile(declaration.Body);
-      if (isInitializer) {
-        chunk.add(LookupInClosure(closure, "this"));
-      } else
-        chunk.add(PushInstruction(NilValue, null));
+      if (!isInitializer) chunk.add(PushInstruction(NilValue, null));
       _chunk = chunk;
     }
     return _chunk!;
   }
 }
 
-class EleuClass implements ICallable, IChunkCompilable {
+class EleuClass implements ICallable {
   final String _name;
   @override
   String get Name => _name;
   OTable Methods = OTable();
   EleuClass? Superclass;
-  Chunk? _chunk;
 
   EleuClass(this._name, this.Superclass);
 
@@ -174,30 +178,9 @@ class EleuClass implements ICallable, IChunkCompilable {
     var instance = EleuInstance(this);
     var initializer = FindMethod("init");
     if (initializer is EleuFunction) {
-      initializer.bind(instance).Call(interpreter, arguments);
+      initializer.bind(instance,false).Call(interpreter, arguments);
     }
     return instance;
-  }
-
-  Chunk _compileChunk() {
-    var instance = EleuInstance(this);
-    var compiler = StmtCompiler();
-    compiler.emit(PushInstruction(instance, null));
-
-
-    // var environment = EleuEnvironment(closure);
-    // environment.Define("this", instance);
-
-    // var chunk = compiler.compile(declaration.Body);
-
-    // chunk.add (LookupInClosure(closure, "this"));
-    return compiler.chunk;
-  }
-
-  @override
-  Chunk get compiledChunk {
-    _chunk ??= _compileChunk();
-    return _chunk!;
   }
 
   Object FindMethod(String name) {
@@ -219,13 +202,13 @@ class EleuInstance {
 
   EleuInstance(this.klass);
 
-  object Get(string name) {
+  object Get(string name, bool bindInstructions) {
     var val = fields.Get(name);
     if (val == NilValue) {
       var method = klass.FindMethod(name);
       if (method == NilValue) throw EleuRuntimeError(null, "Undefined property '$name'.");
       var func = method as EleuFunction;
-      return func.bind(this);
+      return func.bind(this,bindInstructions);
     }
     return val;
   }

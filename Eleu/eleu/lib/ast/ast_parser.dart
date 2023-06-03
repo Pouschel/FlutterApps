@@ -352,10 +352,12 @@ class AstParser {
     while (true) {
       if (Match(TokenType.TokenLeftParen)) {
         expr = FinishCall(expr, null);
+        expr.Status = status.Union(CurrentInputStatus);
       } else if (Match(TokenType.TokenDot)) {
         Token name =
             Consume(TokenType.TokenIdentifier, "Expect property name after '.'.");
         expr = Expr.Get(expr, name.StringValue);
+        expr.Status = status.Union(CurrentInputStatus);
       } else {
         break;
       }
