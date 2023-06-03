@@ -28,7 +28,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   EleuEnvironment globals = EleuEnvironment(null);
   List<EleuEnvironment> prevEnvs = [];
   late EleuEnvironment environment;
-  Map<Expr, int> locals = Map.identity();
+  //Map<Expr, int> locals = Map.identity();
   bool Function(Stmt)? canContinueFunc;
   late InterpretResult Function(Stmt) Execute;
 
@@ -81,20 +81,18 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult Interpret() {
-    var res = start();
-    while (res == EEleuResult.NextStep) {
-      res = step();
-    }
-    return res;
-    // Execute = ExecuteRelease;
-    // return DoInterpret();
+    // var res = start();
+    // while (res == EEleuResult.NextStep) {
+    //   res = step();
+    // }
+    // return res;
+    Execute = ExecuteRelease;
+    return DoInterpret();
   }
 
-  
   EEleuResult start() {
     EEleuResult result = EEleuResult.Ok;
     try {
-      locals = Map.identity();
       callStack = Stack();
       Resolve();
       ExecutedInstructionCount = 0;
@@ -147,7 +145,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   EEleuResult DoInterpret() {
     EEleuResult result = EEleuResult.Ok;
     try {
-      locals = Map.identity();
       callStack = Stack();
       Resolve();
       ExecutedInstructionCount = 0;
@@ -171,7 +168,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   void resolveLocal(Expr expr, int depth) {
-    locals[expr] = depth;
+    expr.localDistance = depth;
   }
 
   InterpretResult ExecuteBlock(List<Stmt> statements, EleuEnvironment environment) {
@@ -197,8 +194,8 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   object LookUpVariable(string name, Expr expr) {
-    var distance = locals[expr];
-    if (distance != null) {
+    var distance = expr.localDistance;
+    if (distance >= 0) {
       return environment.GetAt(name, distance);
     } else {
       return globals.Lookup(name);
@@ -240,8 +237,8 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   @override
   Object VisitAssignExpr(AssignExpr expr) {
     var value = Evaluate(expr.Value);
-    var distance = locals[expr];
-    if (distance != null) {
+    var distance = expr.localDistance;
+    if (distance >= 0) {
       environment.AssignAt(distance, expr.Name, value);
     } else {
       globals.Assign(expr.Name, value);
@@ -465,7 +462,9 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
 
   @override
   Object VisitSuperExpr(SuperExpr expr) {
-    int distance = locals[expr] ?? 0;
+    int distance = expr.localDistance;
+    if (distance < 0) distance = 0;
+//    int distance = locals[expr] ?? 0;
     EleuClass superclass = environment.GetAt("super", distance) as EleuClass;
     EleuInstance obj = environment.GetAt("this", distance - 1) as EleuInstance;
     var method = superclass.FindMethod(expr.Method);
@@ -521,7 +520,8 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
         result = InterpretResult.NilResult;
         break;
       }
-      if (result.Stat == InterpretStatus.Continue || result.Stat == InterpretStatus.Normal) {
+      if (result.Stat == InterpretStatus.Continue ||
+          result.Stat == InterpretStatus.Normal) {
         if (stmt.Increment != null) Evaluate(stmt.Increment!);
         continue;
       }

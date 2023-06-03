@@ -8,6 +8,7 @@ import 'ast_stmt.dart';
 
 abstract class ExprStmtBase {
   InputStatus Status = InputStatus();
+  int localDistance = -1;
 
   @override
   String toString() => Status.toString();

@@ -333,16 +333,15 @@ class JumpInstruction extends Instruction {
 }
 
 class AssignInstruction extends Instruction {
-  Expr lookup;
   String name;
+  int distance;
 
-  AssignInstruction(this.name, this.lookup) : super(lookup.Status);
+  AssignInstruction(this.name,  this.distance, InputStatus status) : super(status);
 
   @override
   void execute(Interpreter vm) {
     var value = vm.peek();
-    var distance = vm.locals[lookup];
-    if (distance != null) {
+    if (distance >= 0) {
       vm.environment.AssignAt(distance, name, value);
     } else {
       vm.globals.Assign(name, value);

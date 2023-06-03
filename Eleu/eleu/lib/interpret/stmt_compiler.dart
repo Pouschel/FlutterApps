@@ -159,7 +159,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   @override
   void VisitAssignExpr(AssignExpr expr) {
     expr.Value.Accept(this);
-    chunk.add(AssignInstruction(expr.Name, expr));
+    chunk.add(AssignInstruction(expr.Name, expr.localDistance,expr.Status));
   }
 
   @override
