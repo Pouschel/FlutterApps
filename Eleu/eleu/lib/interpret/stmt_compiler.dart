@@ -131,7 +131,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
         stmt.Value!.Accept(this);
       else
         emit(PushInstruction(NilValue, stmt.Keyword.Status));
-    }
+    } else
+      emit(LookupVarInstruction("this", 1, stmt.Status));
     emit(ReturnInstruction(this.scopeDepth, stmt.Status));
   }
 
