@@ -185,9 +185,11 @@ class CallInstruction extends Instruction {
     if (callee is EleuClass) {
       var cls = callee;
       var instance = EleuInstance(cls);
-      vm.push(instance);
       var initializer = cls.FindMethod("init");
-      if (initializer is! EleuFunction) return;
+      if (initializer is! EleuFunction) {
+        vm.push(instance);
+        return;
+      }
       initializer = initializer.bind(instance, true);
 
       var environment = EleuEnvironment(initializer.closure);
@@ -224,7 +226,7 @@ class CallInstruction extends Instruction {
 class LookupVarInstruction extends Instruction {
   String name;
   int distance;
-  LookupVarInstruction(this.name, this.distance, InputStatus status) : super(status);
+  LookupVarInstruction(this.name, this.distance, InputStatus? status) : super(status);
 
   @override
   void execute(Interpreter vm) {
@@ -427,12 +429,13 @@ class SetInstruction extends Instruction {
   SetInstruction(this.name, InputStatus status) : super(status);
   @override
   void execute(Interpreter vm) {
+    var value = vm.pop();
     var obj = vm.pop();
     if (obj is! EleuInstance) {
       throw vm.Error("Only instances have fields.");
     }
-    var value = vm.peek();
     obj.Set(name, value);
+    vm.push(value);
   }
 }
 

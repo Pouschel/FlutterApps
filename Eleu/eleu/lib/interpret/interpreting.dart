@@ -95,7 +95,7 @@ class InterpretResult {
 
 class EleuEnvironment {
   final EleuEnvironment? enclosing;
-  final OTable values = OTable();
+  final OTable2 values = OTable2();
 
   EleuEnvironment(this.enclosing);
   void Define(String name, Object value) => values.Set(name, value);

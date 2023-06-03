@@ -88,6 +88,29 @@ class OTable {
   bool ContainsKey(String key) => _map.containsKey(key);
 }
 
+class OTable2 {
+  final List<string> names = [];
+  final List<Object> values = [];
+
+  void Set(String name, Object val) {
+    var index = names.indexOf(name);
+    if (index >= 0)
+      values[index] = val;
+    else {
+      names.add(name);
+      values.add(val);
+    }
+  }
+
+  Object Get(String name) {
+    var index = names.indexOf(name);
+    if (index < 0) return NilValue;
+    return values[index];
+  }
+
+  bool ContainsKey(String key) => names.contains(key);
+}
+
 class NativeFunction implements ICallable {
   final NativeFn function;
   final String name;
@@ -150,7 +173,10 @@ class EleuFunction implements ICallable, IChunkCompilable {
       var compiler = StmtCompiler();
       compiler.isInitializer = this.isInitializer;
       var chunk = compiler.compile(declaration.Body);
-      if (!isInitializer) chunk.add(PushInstruction(NilValue, null));
+      if (!isInitializer)
+        chunk.add(PushInstruction(NilValue, null));
+      else
+        chunk.add(LookupVarInstruction("this", 1, null));
       _chunk = chunk;
     }
     return _chunk!;
@@ -178,7 +204,7 @@ class EleuClass implements ICallable {
     var instance = EleuInstance(this);
     var initializer = FindMethod("init");
     if (initializer is EleuFunction) {
-      initializer.bind(instance,false).Call(interpreter, arguments);
+      initializer.bind(instance, false).Call(interpreter, arguments);
     }
     return instance;
   }
@@ -208,7 +234,7 @@ class EleuInstance {
       var method = klass.FindMethod(name);
       if (method == NilValue) throw EleuRuntimeError(null, "Undefined property '$name'.");
       var func = method as EleuFunction;
-      return func.bind(this,bindInstructions);
+      return func.bind(this, bindInstructions);
     }
     return val;
   }

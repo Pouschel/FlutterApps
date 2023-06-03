@@ -215,8 +215,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitSetExpr(SetExpr expr) {
-    expr.Value.Accept(this);
     expr.Obj.Accept(this);
+    expr.Value.Accept(this);
     emit(SetInstruction(expr.Name, expr.Status));
   }
 
