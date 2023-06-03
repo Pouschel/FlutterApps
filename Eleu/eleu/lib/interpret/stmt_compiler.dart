@@ -24,11 +24,13 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     return chunk;
   }
 
+  void emit(Instruction ins) => chunk.add(ins);
+
   @override
   void VisitAssertStmt(AssertStmt stmt) {
     if (!stmt.isErrorAssert) {
       stmt.expression.Accept(this);
-      chunk.add(AssertInstruction(stmt.Status));
+      emit(AssertInstruction(stmt.Status));
     }
 
     // TODO: assert break
@@ -36,13 +38,13 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitBlockStmt(BlockStmt stmt) {
-    chunk.add(ScopeInstruction(true));
+    emit(ScopeInstruction(true));
     scopeDepth++;
     for (var s in stmt.Statements) {
       s.Accept(this);
     }
     scopeDepth--;
-    chunk.add(ScopeInstruction(false));
+    emit(ScopeInstruction(false));
   }
 
   @override
@@ -51,36 +53,40 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
         stmt.IsBreak ? JumpMode.jmp_true : JumpMode.jmp_false, stmt.Status);
     breakContinues.add(jump);
     jump.leaveScopes = scopeDepth;
-    chunk.add(jump);
+    emit(jump);
   }
 
   @override
   void VisitClassStmt(ClassStmt stmt) {
-    // TODO: implement VisitClassStmt
+    if (stmt.Superclass != null) {
+      stmt.Superclass!.Accept(this);
+    } else
+      emit(PushInstruction(NilValue, stmt.Status));
+    emit(ClassInstruction(stmt.Name, stmt.Methods, stmt.Status));
   }
 
   @override
   void VisitExpressionStmt(ExpressionStmt stmt) {
     stmt.expression.Accept(this);
-    chunk.add(PopInstruction(stmt.expression.Status));
+    emit(PopInstruction(stmt.expression.Status));
   }
 
   @override
   void VisitFunctionStmt(FunctionStmt stmt) {
-    chunk.add(DefFunInstruction(stmt));
+    emit(DefFunInstruction(stmt));
   }
 
   @override
   void VisitIfStmt(IfStmt stmt) {
     stmt.Condition.Accept(this);
     var thenJump = JumpInstruction(JumpMode.jmp_false, stmt.Condition.Status);
-    chunk.add(thenJump);
-    chunk.add(PopInstruction(stmt.Condition.Status));
+    emit(thenJump);
+    emit(PopInstruction(stmt.Condition.Status));
     stmt.ThenBranch.Accept(this);
     var elseJump = JumpInstruction(JumpMode.jmp, stmt.ThenBranch.Status);
-    chunk.add(elseJump);
+    emit(elseJump);
     thenJump.offset = chunk.length;
-    chunk.add(PopInstruction(stmt.ThenBranch.Status));
+    emit(PopInstruction(stmt.ThenBranch.Status));
     if (stmt.ElseBranch != null) stmt.ElseBranch!.Accept(this);
     elseJump.offset = chunk.length;
   }
@@ -92,13 +98,14 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     stmt.Count.Accept(this);
     int repeatIndex = chunk.length;
     var endJump = JumpInstruction(JumpMode.jmp_le_zero, stmt.Count.Status);
-    chunk.add(endJump);
+    emit(endJump);
     stmt.Body.Accept(this);
     int incrPos = chunk.length;
-    chunk.add(PushInstruction(Number(1), stmt.Count.Status));
-    chunk.add(BinaryOpInstruction(TokenType.TokenMinus, stmt.Count.Status));
-    chunk.add(JumpInstruction(JumpMode.jmp, stmt.Count.Status)..offset = repeatIndex);
+    emit(PushInstruction(Number(1), stmt.Count.Status));
+    emit(BinaryOpInstruction(TokenType.TokenMinus, stmt.Count.Status));
+    emit(JumpInstruction(JumpMode.jmp, stmt.Count.Status)..offset = repeatIndex);
     endJump.offset = chunk.length;
+    emit(PopInstruction(stmt.Status));
     patchBreakContinues(endJump.offset, incrPos);
     breakContinues = oldBreaks;
   }
@@ -119,8 +126,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     if (stmt.Value != null)
       stmt.Value!.Accept(this);
     else
-      chunk.add(PushInstruction(NilValue, stmt.Keyword.Status));
-    chunk.add(ReturnInstruction(this.scopeDepth, stmt.Status));
+      emit(PushInstruction(NilValue, stmt.Keyword.Status));
+    emit(ReturnInstruction(this.scopeDepth, stmt.Status));
   }
 
   @override
@@ -128,8 +135,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     if (stmt.Initializer != null)
       stmt.Initializer!.Accept(this);
     else
-      chunk.add(PushInstruction(NilValue, stmt.Status));
-    chunk.add(VarDefInstruction(stmt.Name, stmt.Status));
+      emit(PushInstruction(NilValue, stmt.Status));
+    emit(VarDefInstruction(stmt.Name, stmt.Status));
   }
 
   @override
@@ -139,15 +146,15 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     int loopStart = chunk.length;
     stmt.Condition.Accept(this);
     var exitJump = JumpInstruction(JumpMode.jmp_false, stmt.Condition.Status);
-    chunk.add(exitJump);
-    chunk.add(PopInstruction(stmt.Condition.Status));
+    emit(exitJump);
+    emit(PopInstruction(stmt.Condition.Status));
     stmt.Body.Accept(this);
     int incrementOfs = chunk.length;
     if (stmt.Increment != null) {
       stmt.Increment!.Accept(this);
-      chunk.add(PopInstruction(stmt.Increment!.Status));
+      emit(PopInstruction(stmt.Increment!.Status));
     }
-    chunk.add(JumpInstruction(JumpMode.jmp, stmt.Condition.Status)..offset = loopStart);
+    emit(JumpInstruction(JumpMode.jmp, stmt.Condition.Status)..offset = loopStart);
     exitJump.offset = chunk.length;
 
     patchBreakContinues(exitJump.offset, incrementOfs);
@@ -157,14 +164,14 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   @override
   void VisitAssignExpr(AssignExpr expr) {
     expr.Value.Accept(this);
-    chunk.add(AssignInstruction(expr.Name, expr.localDistance, expr.Status));
+    emit(AssignInstruction(expr.Name, expr.localDistance, expr.Status));
   }
 
   @override
   void VisitBinaryExpr(BinaryExpr expr) {
     expr.Left.Accept(this);
     expr.Right.Accept(this);
-    chunk.add(BinaryOpInstruction(expr.Op.Type, expr.Status));
+    emit(BinaryOpInstruction(expr.Op.Type, expr.Status));
   }
 
   @override
@@ -174,7 +181,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
       argument.Accept(this);
     }
     expr.Callee.Accept(this);
-    chunk.add(CallInstruction(expr.Arguments.length, expr.Status));
+    emit(CallInstruction(expr.Arguments.length, expr.Status));
   }
 
   @override
@@ -190,14 +197,14 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   @override
   void VisitLiteralExpr(LiteralExpr expr) {
     var value = expr.Value ?? NilValue;
-    chunk.add(PushInstruction(value, expr.Status));
+    emit(PushInstruction(value, expr.Status));
   }
 
   @override
   void VisitLogicalExpr(LogicalExpr expr) {
     expr.Left.Accept(this);
     expr.Right.Accept(this);
-    chunk.add(LogicalOpInstruction(expr.Op, expr.Status));
+    emit(LogicalOpInstruction(expr.Op, expr.Status));
   }
 
   @override
@@ -218,11 +225,11 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   @override
   void VisitUnaryExpr(UnaryExpr expr) {
     expr.Right.Accept(this);
-    chunk.add(UnaryOpInstruction(expr.Op.Type, expr.Status));
+    emit(UnaryOpInstruction(expr.Op.Type, expr.Status));
   }
 
   @override
   void VisitVariableExpr(VariableExpr expr) {
-    chunk.add(LookupVarInstruction(expr.Name, expr.localDistance, expr.Status));
+    emit(LookupVarInstruction(expr.Name, expr.localDistance, expr.Status));
   }
 }

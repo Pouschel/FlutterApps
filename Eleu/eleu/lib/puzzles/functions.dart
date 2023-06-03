@@ -86,7 +86,7 @@ class PuzzleFunctions extends NativeFunctionBase {
   object _isSolved(OList _) {
     var puzzle = CheckPuzzleActive("_isSolved");
     bool? b = puzzle.CheckWin();
-    if (b == null) return NilValue;
+    if (b == null) return false;
     return b;
   }
 

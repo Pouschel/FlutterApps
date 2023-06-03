@@ -168,7 +168,7 @@ gAA""";
 void main() {
   var tw = TextWriter();
   //var fn = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests/puzzle/FromLessons/A44-Summe.eleu";
-  var fn = r"C:\Code\OwnApps\EleuStudio\EleuSrc\Examples\Ex1.eleu";
+  var fn = r"C:\Code\OwnApps\EleuStudio\EleuSrc\Examples\Ex2.eleu";
   var tdir = "C:/Code/OwnApps/EleuStudio/EleuSrc/Tests";
   var tdir2 = "c:\\Sync\\_Schule\\_Info\\10\\2-Programmieren";
   var etest = EleuTester();

@@ -1,4 +1,5 @@
 import 'package:eleu/interpret/stmt_compiler.dart';
+import 'package:hati/hati.dart';
 
 import '../ast/ast_stmt.dart';
 import '../eleu.dart';
@@ -104,7 +105,7 @@ class BinaryOpInstruction extends Instruction {
   }
 
   @override
-  String toString() => "op $op";
+  String toString() => "op ${op.toShortString()}";
 }
 
 class UnaryOpInstruction extends Instruction {
@@ -173,7 +174,10 @@ class CallInstruction extends Instruction {
       return;
     }
     if (callee is! IChunkCompilable)
-      throw EleuRuntimeError(status, "Can only call functions and classes.");
+      throw vm.Error("Can only call functions and classes.");
+    var function = callee as ICallable;
+    if (nArgs != function.Arity)
+      throw vm.Error("Expected ${function.Arity} arguments but got ${nArgs}.");
     if (callee is EleuFunction) {
       var environment = EleuEnvironment(callee.closure);
       for (int i = nArgs - 1; i >= 0; i--) {
@@ -186,27 +190,6 @@ class CallInstruction extends Instruction {
       return;
     }
     throw UnsupportedError("message");
-    // var function = callee;
-
-    // if (function is! NativeFunction && nArgs != function.Arity)
-    //   throw EleuRuntimeError(
-    //       status, "Expected ${function.Arity} arguments but got ${nArgs}.");
-    // if (vm.callStack.length >= vm.MaxStackDepth)
-    //   throw EleuRuntimeError(status, "Zu viele verschachtelte Funktionsaufrufe.");
-
-    // var arguments = <Object>[];
-    // for (int i = 0; i < expr.Arguments.length; i++) {
-    //   var argument = expr.Arguments[i];
-    //   arguments.add(Evaluate(argument));
-    // }
-    // try {
-    //   var csi = CallStackInfo(this, function, environment);
-    //   callStack.push(csi);
-    //   //Trace.Write($"{callStack.Count} ");		if (callStack.Count % 100 == 0) Trace.WriteLine("");
-    //   return function.Call(this, arguments);
-    // } finally {
-    //   callStack.pop();
-    // }
   }
 
   void executeNative(Interpreter vm, NativeFunction callee) {
@@ -243,6 +226,8 @@ class LookupVarInstruction extends Instruction {
     var value = vm.LookUpVariable(name, distance);
     vm.push(value);
   }
+
+  @override String toString() =>"get_value '$name' at $distance";
 }
 
 class LookupInClosure extends Instruction {
@@ -278,6 +263,11 @@ class ScopeInstruction extends Instruction {
       vm.enterEnv(env);
     } else
       vm.leaveEnv();
+  }
+
+  @override
+  String toString() {
+    return begin ? "enter_scope" : "leave_scope";
   }
 }
 
@@ -328,7 +318,7 @@ class JumpInstruction extends Instruction {
   }
 
   @override
-  String toString() => "$mode $offset";
+  String toString() => "${mode.toShortString()} $offset";
 }
 
 class AssignInstruction extends Instruction {
@@ -342,6 +332,9 @@ class AssignInstruction extends Instruction {
     var value = vm.peek();
     vm.assignAtDistance(name, distance, value);
   }
+
+  @override
+  String toString() => "assign ${name} ${distance}";
 }
 
 class ReturnInstruction extends Instruction {
@@ -364,5 +357,47 @@ class AssertInstruction extends Instruction {
     var val = vm.pop();
     if (IsFalsey(val))
       throw EleuAssertionFail(status, "Eine Annahme ist fehlgeschlagen.");
+  }
+}
+
+class ClassInstruction extends Instruction {
+  string clsName;
+  List<FunctionStmt> methods;
+  ClassInstruction(this.clsName, this.methods, InputStatus status) : super(status);
+
+  @override
+  void execute(Interpreter vm) {
+    var superclassV = vm.pop();
+    EleuClass? superclass;
+    if (superclassV != NilValue) {
+      if (superclassV is! EleuClass) {
+        throw vm.Error("Superclass must be a class.");
+      }
+      superclass = superclassV;
+    }
+    var klass = vm.environment.GetAtDistance0(clsName);
+    if (klass is! EleuClass) {
+      vm.environment.Define(clsName, NilValue);
+      klass = EleuClass(clsName, superclass);
+    } else {
+      if (klass.Superclass != null && klass.Superclass != superclass)
+        throw EleuRuntimeError(status,
+            "Super class must be the same (${klass.Superclass?.Name} vs. ${superclass?.Name})");
+    }
+    if (superclass != null) {
+      vm.environment = EleuEnvironment(vm.environment);
+      vm.environment.Define("super", superclass);
+    }
+
+    //klass = new EleuClass(stmt.Name, superclass);
+    for (FunctionStmt method in methods) {
+      EleuFunction function = EleuFunction(method, vm.environment, method.Name == "init");
+      klass.Methods.Set(method.Name, function);
+    }
+    var kval = klass;
+    if (superclass != null) {
+      vm.environment = vm.environment.enclosing!;
+    }
+    vm.environment.Assign(clsName, kval);
   }
 }
