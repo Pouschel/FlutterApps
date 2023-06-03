@@ -186,7 +186,6 @@ class CallInstruction extends Instruction {
       vm.enterEnv(environment);
       var frame = CallFrame(callee.compiledChunk, func: callee);
       vm.enterFrame(frame);
-
       return;
     }
     throw UnsupportedError("message");
@@ -206,16 +205,6 @@ class CallInstruction extends Instruction {
   String toString() => "call/$nArgs";
 }
 
-// class ReturnInstruction extends Instruction {
-
-//   ReturnInstruction(this.value, InputStatus? status) : super(status);
-//   @override
-//   void execute(Interpreter vm) {
-//     vm.frame = vm.frame.next!;
-//     vm.push(value);
-//   }
-// }
-
 class LookupVarInstruction extends Instruction {
   String name;
   int distance;
@@ -227,7 +216,8 @@ class LookupVarInstruction extends Instruction {
     vm.push(value);
   }
 
-  @override String toString() =>"get_value '$name' at $distance";
+  @override
+  String toString() => "get_value '$name' at $distance";
 }
 
 class LookupInClosure extends Instruction {
@@ -388,8 +378,6 @@ class ClassInstruction extends Instruction {
       vm.environment = EleuEnvironment(vm.environment);
       vm.environment.Define("super", superclass);
     }
-
-    //klass = new EleuClass(stmt.Name, superclass);
     for (FunctionStmt method in methods) {
       EleuFunction function = EleuFunction(method, vm.environment, method.Name == "init");
       klass.Methods.Set(method.Name, function);
@@ -399,5 +387,33 @@ class ClassInstruction extends Instruction {
       vm.environment = vm.environment.enclosing!;
     }
     vm.environment.Assign(clsName, kval);
+  }
+}
+
+class GetInstruction extends Instruction {
+  String name;
+  GetInstruction(this.name, InputStatus status) : super(status);
+  @override
+  void execute(Interpreter vm) {
+    var obj = vm.pop();
+    if (obj is EleuInstance) {
+      var val = obj.Get(name);
+      vm.push(val);
+    }
+    throw EleuRuntimeError(status, "Only instances have properties.");
+  }
+}
+
+class SetInstruction extends Instruction {
+  String name;
+  SetInstruction(this.name, InputStatus status):super(status);
+  @override
+  void execute(Interpreter vm) {
+    var obj = vm.pop();
+    if (obj is! EleuInstance) {
+      throw EleuRuntimeError(status, "Only instances have fields.");
+    }
+    var value = vm.peek();
+    obj.Set(name, value);
   }
 }

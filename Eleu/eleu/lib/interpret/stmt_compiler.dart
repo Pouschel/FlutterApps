@@ -186,7 +186,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitGetExpr(GetExpr expr) {
-    // TODO: implement VisitGetExpr
+    expr.Obj.Accept(this);
+    emit(GetInstruction(expr.Name, expr.Status));
   }
 
   @override
@@ -209,7 +210,9 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitSetExpr(SetExpr expr) {
-    // TODO: implement VisitSetExpr
+    expr.Value.Accept(this);
+    expr.Obj.Accept(this);
+    emit(SetInstruction(expr.Name, expr.Status));
   }
 
   @override
