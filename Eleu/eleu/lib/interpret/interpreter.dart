@@ -466,7 +466,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   Object VisitSuperExpr(SuperExpr expr) {
     int distance = expr.localDistance;
     if (distance < 0) distance = 0;
-//    int distance = locals[expr] ?? 0;
     EleuClass superclass = environment.GetAt("super", distance) as EleuClass;
     EleuInstance obj = environment.GetAt("this", distance - 1) as EleuInstance;
     var method = superclass.FindMethod(expr.Method);

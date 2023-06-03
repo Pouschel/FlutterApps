@@ -188,8 +188,8 @@ class CallInstruction extends Instruction {
       vm.push(instance);
       var initializer = cls.FindMethod("init");
       if (initializer is! EleuFunction) return;
-      initializer = initializer.bind(instance,true);
-      
+      initializer = initializer.bind(instance, true);
+
       var environment = EleuEnvironment(initializer.closure);
       // environment.Define("this", instance);
       doCall(vm, environment, initializer);
@@ -413,7 +413,7 @@ class GetInstruction extends Instruction {
   void execute(Interpreter vm) {
     var obj = vm.pop();
     if (obj is EleuInstance) {
-      var val = obj.Get(name,true);
+      var val = obj.Get(name, true);
       vm.push(val);
       return;
     }
@@ -432,5 +432,22 @@ class SetInstruction extends Instruction {
     }
     var value = vm.peek();
     obj.Set(name, value);
+  }
+}
+
+class SuperInstruction extends Instruction {
+  int distance;
+  string name;
+
+  SuperInstruction(this.name, this.distance, InputStatus status):super(status);
+  @override
+  void execute(Interpreter vm) {
+    EleuClass superclass = vm.environment.GetAt("super", distance) as EleuClass;
+    EleuInstance obj = vm.environment.GetAt("this", distance - 1) as EleuInstance;
+    var method = superclass.FindMethod(name);
+    if (method is! EleuFunction) {
+      throw  vm.Error("Undefined property '${name}'.");
+    }
+    vm.push( method.bind(obj, true));
   }
 }

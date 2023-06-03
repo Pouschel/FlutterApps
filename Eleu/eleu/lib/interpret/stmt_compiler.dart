@@ -220,13 +220,15 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitSuperExpr(SuperExpr expr) {
-    // TODO: implement VisitSuperExpr
+    var distance = expr.localDistance;
+    if (distance < 0) distance = 0;
+    emit(SuperInstruction(expr.Method,distance,expr.Status));
   }
 
   @override
   void VisitThisExpr(ThisExpr expr) {
     // distance 1 to high from resolver?
-    emit(LookupVarInstruction(expr.Keyword, expr.localDistance , expr.Status));
+    emit(LookupVarInstruction(expr.Keyword, expr.localDistance, expr.Status));
   }
 
   @override
