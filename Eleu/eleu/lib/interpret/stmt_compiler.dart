@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:eleu/scanning.dart';
 
 import '../ast/ast_expr.dart';
@@ -15,6 +17,7 @@ class Chunk {
 class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
   Chunk chunk = Chunk();
   List<JumpInstruction> breakContinues = [];
+  int scopeDepth = 0;
 
   Chunk compile(List<Stmt> stmts) {
     for (var stmt in stmts) {
@@ -25,15 +28,22 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitAssertStmt(AssertStmt stmt) {
-    // TODO: implement VisitAssertStmt
+    if (!stmt.isErrorAssert) {
+      stmt.expression.Accept(this);
+      chunk.add(AssertInstruction(stmt.Status));
+    }
+
+    // TODO: assert break
   }
 
   @override
   void VisitBlockStmt(BlockStmt stmt) {
     chunk.add(ScopeInstruction(true));
+    scopeDepth++;
     for (var s in stmt.Statements) {
       s.Accept(this);
     }
+    scopeDepth--;
     chunk.add(ScopeInstruction(false));
   }
 
@@ -42,6 +52,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
     var jump = JumpInstruction(
         stmt.IsBreak ? JumpMode.jmp_true : JumpMode.jmp_false, stmt.Status);
     breakContinues.add(jump);
+    jump.leaveScopes = scopeDepth;
     chunk.add(jump);
   }
 
@@ -96,6 +107,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   void patchBreakContinues(int breakOfs, int continueOfs) {
     for (var jmp in breakContinues) {
+      jmp.leaveScopes -= this.scopeDepth;
       if (jmp.mode == JumpMode.jmp_true)
         jmp.offset = breakOfs;
       else
@@ -174,7 +186,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitGroupingExpr(GroupingExpr expr) {
-    // TODO: implement VisitGroupingExpr
+    expr.Expression.Accept(this);
   }
 
   @override
@@ -185,7 +197,9 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitLogicalExpr(LogicalExpr expr) {
-    // TODO: implement VisitLogicalExpr
+    expr.Left.Accept(this);
+    expr.Right.Accept(this);
+    chunk.add(LogicalOpInstruction(expr.Op, expr.Status));
   }
 
   @override
@@ -205,7 +219,8 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
 
   @override
   void VisitUnaryExpr(UnaryExpr expr) {
-    // TODO: implement VisitUnaryExpr
+    expr.Right.Accept(this);
+    chunk.add(UnaryOpInstruction(expr.Op.Type, expr.Status));
   }
 
   @override

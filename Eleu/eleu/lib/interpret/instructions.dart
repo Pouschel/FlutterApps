@@ -108,6 +108,60 @@ class BinaryOpInstruction extends Instruction {
   String toString() => "op $op";
 }
 
+class UnaryOpInstruction extends Instruction {
+  TokenType type;
+
+  UnaryOpInstruction(this.type, InputStatus status) : super(status);
+  @override
+  void execute(Interpreter vm) {
+    var right = vm.pop();
+    switch (type) {
+      case TokenType.TokenBang:
+        if (right is! bool)
+          throw EleuRuntimeError(status, "Operand muss vom Typ boolean sein.");
+        vm.push(!IsTruthy(right));
+        break;
+      case TokenType.TokenMinus:
+        {
+          if (right is! Number)
+            throw EleuRuntimeError(status, "Operand muss eine Zahl sein.");
+          vm.push(-right);
+        }
+      default:
+        throw throw EleuRuntimeError(status, "Unknown op type: ${type}"); // Unreachable.
+    }
+  }
+}
+
+class LogicalOpInstruction extends Instruction {
+  Token op;
+  LogicalOpInstruction(this.op, InputStatus status) : super(status);
+
+  @override
+  void execute(Interpreter vm) {
+    var right = vm.pop();
+    if (right is! bool)
+      throw EleuRuntimeError(status,
+          "Der Operator '${op.Type}' kann nicht auf '${right}' angewendet werden.");
+    var left = vm.pop();
+    if (left is! bool)
+      throw EleuRuntimeError(status,
+          "Der Operator '${op.Type}' kann nicht auf '${left}' angewendet werden.");
+    if (op.Type == TokenType.TokenOr) {
+      if (IsTruthy(left)) {
+        vm.push(left);
+        return;
+      }
+    } else {
+      if (IsFalsey(left)) {
+        vm.push(left);
+        return;
+      }
+    }
+    vm.push(right);
+  }
+}
+
 class CallInstruction extends Instruction {
   int nArgs;
   CallInstruction(this.nArgs, InputStatus status) : super(status);
@@ -238,10 +292,14 @@ enum JumpMode {
 class JumpInstruction extends Instruction {
   late int offset;
   JumpMode mode = JumpMode.jmp;
+  int leaveScopes = 0;
 
   JumpInstruction(this.mode, InputStatus status) : super(status);
   @override
   void execute(Interpreter vm) {
+    for (var i = 0; i < leaveScopes; i++) {
+      vm.leaveEnv();
+    }
     if (mode == JumpMode.jmp) {
       vm.frame.ip = offset;
       return;
@@ -297,5 +355,16 @@ class ReturnInstruction extends Instruction {
   @override
   void execute(Interpreter vm) {
     vm.leaveFrame();
+  }
+}
+
+class AssertInstruction extends Instruction {
+  AssertInstruction(InputStatus status) : super(status);
+
+  @override
+  void execute(Interpreter vm) {
+    var val = vm.pop();
+    if (IsFalsey(val))
+      throw EleuAssertionFail(status, "Eine Annahme ist fehlgeschlagen.");
   }
 }
