@@ -102,6 +102,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
     try {
       if (ins.status != null) currentStatus = ins.status!;
       ins.execute(this);
+      ExecutedInstructionCount++;
     } on EleuRuntimeError catch (ex) {
       if (options.ThrowOnAssert && ex is EleuAssertionFail) rethrow;
       var stat = ex.Status ?? currentStatus;
@@ -117,7 +118,7 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
   }
 
   EEleuResult start() {
-    EEleuResult result = EEleuResult.Ok;
+    EEleuResult result = EEleuResult.RuntimeError;
     try {
       callStack = Stack();
       Resolve();
@@ -132,7 +133,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor<InterpretResult> {
       options.Err.WriteLine(msg);
       result = EEleuResult.RuntimeError;
     }
-
     return result;
   }
 

@@ -2,10 +2,17 @@
 §code
 
 print("ÄÜ");
-if (x >= 4); { print(x); }
+
 §end_code
 
-§run
-
+§steps
+§steps
+§steps
+§steps
+§steps
+§steps
+§steps
+§steps
+§steps
 
 

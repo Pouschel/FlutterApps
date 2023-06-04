@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:eleu/eleu.dart';
 import 'package:eleu/interpret/interpreter.dart';
+import 'package:eleu/puzzles/puzzle.dart';
 
 enum CmdMode {
   /// next line as command expected
@@ -12,16 +13,15 @@ enum CmdMode {
   puzzle,
 }
 
-class CallbackWriter extends TextWriter
-{
-    void Function(String ) callback;
+class CallbackWriter extends TextWriter {
+  void Function(String) callback;
 
-    CallbackWriter(this.callback);
-    
-   
-    // ignore: non_constant_identifier_names
-    @override  void WriteLine(String msg) {
-      callback(msg);
+  CallbackWriter(this.callback);
+
+  // ignore: non_constant_identifier_names
+  @override
+  void WriteLine(String msg) {
+    callback(msg);
   }
 }
 
@@ -31,8 +31,9 @@ class CmdProcessorBase {
   StringBuffer _buffer = StringBuffer();
   String _fileName = "";
   Interpreter? _interpreter;
-  bool _infoMsgReceived=false;
-
+  EEleuResult _lastResult = EEleuResult.NextStep;
+  bool _outStateChanged = false;
+  Stopwatch _watch = Stopwatch();
 
   CmdProcessorBase(this._output);
 
@@ -64,6 +65,9 @@ class CmdProcessorBase {
       return;
     }
     switch (line) {
+      case "ping":
+        _sendInfo("Eleu Sprachserver bereit.");
+        break;
       case "code":
         _mode = CmdMode.code;
         break;
@@ -74,54 +78,100 @@ class CmdProcessorBase {
       case "exit":
         exit();
         break;
-      case "reset":
-        _resetHandler();
+      case "stop":
+        _stop();
+        break;
+      case "steps":
+        _nextSteps(20);
         break;
       default:
-        stderr.writeln("invalid command: $line");
+        _sendInternalError("invalid command: $line");
         break;
     }
   }
 
   void exit() {}
-  void _resetHandler() {
+  void _stop() {
     _fileName = "";
     _mode = CmdMode.command;
     _buffer = StringBuffer();
-    _interpreter=null;
-    _infoMsgReceived=false;
+    _interpreter = null;
+    _lastResult = EEleuResult.CompileError;
+    _outStateChanged = false;
+    _sendRunState(false);
   }
 
-  void _sendOutput(String head, String s) {
+  void _sendString(String head, String s) {
     s.split("\n").forEach((element) {
       if (element.isNotEmpty) _output("$head $s");
     });
   }
 
-  void _sendError(String msg) => _sendOutput("err", msg);
-  void _sendInfo(String msg) => _sendOutput("info", msg);
+  void _sendError(String msg) => _sendString("err", msg); // compiler and runtime errors
+  void _sendInternalError(String msg) => _sendString("i_err", msg);
+  void _sendInfo(String msg) => _sendString("info", msg); // information
+  void _sendOutput(String msg) => _sendString("out", msg); // normal output from print
+  void _sendRunState(bool running) => _sendString("state", "${running ? 1 : 0}");
 
   void _onErrorMsg(String s) => _sendError(s);
-  void _onInfoMsg(String s)
-  {
-_sendInfo(s);
-_infoMsgReceived=true;
+  void _onOutput(String s) {
+    _sendOutput(s);
+    _outStateChanged = true;
   }
+
+  void _onPuzzleChanged(Puzzle? puzzle) {
+    _outStateChanged = true;
+  }
+
   void _endCodeHandler() {
     var code = _buffer.toString();
     _buffer.clear();
     var opt = EleuOptions()
-      ..Out = CallbackWriter(_onInfoMsg)
+      ..Out = CallbackWriter(_onOutput)
       ..Err = CallbackWriter(_onErrorMsg);
-    var watch= Stopwatch()..start();
+    _watch = Stopwatch()..start();
     var (result, interp) = Compile(code, _fileName, opt);
-    _sendInfo("Skript übersetzt in ${watch.elapsedMilliseconds} ms");  
-    if (result != EEleuResult.Ok) {
-      return;
+    _sendInfo("Skript übersetzt in ${_watch.elapsedMilliseconds} ms");
+    _lastResult = result;
+    if (result == EEleuResult.Ok) {
+      _interpreter = interp;
+      interp!.PuzzleChanged = _onPuzzleChanged;
+      _lastResult = _interpreter!.start();
     }
-    _interpreter = interp;
+    _sendRunState(_lastResult == EEleuResult.NextStep);
+    _watch.stop();
+    _watch.reset();
   }
 
+  void _nextSteps(int maxSteps) {
+    if (_interpreter == null || _lastResult != EEleuResult.NextStep) {
+      //_sendInternalError("no program running");
+      _sendRunState(false);
+      return;
+    }
+    _watch.start();
+    _outStateChanged = false;
+    var interp = _interpreter!;
+    for (var i = 0; i < maxSteps && _lastResult == EEleuResult.NextStep; i++) {
+      _lastResult = interp.step();
+      if (_outStateChanged) break;
+    }
+    if (_lastResult == EEleuResult.Ok) {
+      _sendInfo("Skriptausführung wurde normal beendet.");
+      _watch.stop();
+      var ts = _watch.elapsedMicroseconds;
+      int statementCount = _interpreter!.ExecutedInstructionCount;
+      var speed = 1000000 * statementCount ~/ _watch.elapsedMicroseconds;
+      _sendInfo(
+          "$statementCount Befehle in ${_watch.elapsedMilliseconds} ms verarbeitet ($speed Bef./s).");
+      _interpreter = null;
+    } else if (_lastResult != EEleuResult.NextStep) {
+      _sendError("Bei der Skriptausführung sind Fehler aufgetreten.");
+      _interpreter = null;
+    }
+    _watch.stop();
+    _sendRunState(_lastResult == EEleuResult.NextStep);
+  }
 }
 
 class CmdProcessor extends CmdProcessorBase {

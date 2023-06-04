@@ -2,6 +2,7 @@ import 'package:eleu/scanning.dart';
 
 import '../ast/ast_expr.dart';
 import '../ast/ast_stmt.dart';
+import '../eleu.dart';
 import '../types.dart';
 import 'instructions.dart';
 
@@ -34,7 +35,7 @@ class StmtCompiler implements StmtVisitor<void>, ExprVisitor<void> {
       emit(AssertInstruction(stmt.Status));
       return;
     }
-    // throw EleuRuntimeError(stmt.Status, "assert break not supported");
+    throw EleuRuntimeError(stmt.Status, "assert break not supported");
     // TODO: assert break
   }
 
