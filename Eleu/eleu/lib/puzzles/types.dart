@@ -19,7 +19,6 @@ enum ShapeColors {
   Black,
 }
 
-
 enum FieldShapes {
   None,
   Square,
@@ -41,6 +40,7 @@ enum Directions {
   W,
   S,
 }
+
 extension DirectionsExtension on Directions {
   (int dx, int dy) GetOffsetForDirection() {
     int dx = 0, dy = 0;
@@ -61,6 +61,7 @@ extension DirectionsExtension on Directions {
     return (dx, dy);
   }
 }
+
 enum Turns {
   Left,
   Around,
@@ -112,6 +113,13 @@ class FieldState {
     ..Shape = Shape
     ..Object = Object
     ..SVal = SVal;
+
+  Map<string, dynamic> toJson() => {
+        'color': Color.toShortString(),
+        'shape': Shape.toShortString(),
+        'sval': SVal,
+        'object': Object.toShortString(),
+      };
 }
 
 class Cat {
@@ -132,6 +140,8 @@ class Cat {
     var (dx, dy) = this.LookAt.GetOffsetForDirection();
     return (this.Col + dx, this.Row + dy);
   }
+
+  toJson() {}
 }
 
 extension FieldObjectExtension on FieldObjects {
@@ -155,8 +165,6 @@ extension FieldObjectExtension on FieldObjects {
   bool CanTake() => this == FieldObjects.Mouse;
   bool CanPush() => this == FieldObjects.Mouse;
 }
-
-
 
 string CompressBase64(string s) {
   var stringBytes = utf8.encode(s);
@@ -239,8 +247,6 @@ Directions? ParseDirections(string s, bool ignoreCase) =>
     enumFromString(Directions.values, s, ignoreCase);
 Turns? ParseTurns(string s, bool ignoreCase) =>
     enumFromString(Turns.values, s, ignoreCase);
-
-
 
 class PuzzleBundle {
   List<Puzzle> puzzles = [];

@@ -4,7 +4,9 @@ import 'dart:io';
 
 import 'package:eleu/eleu.dart';
 import 'package:eleu/interpret/interpreter.dart';
+import 'package:eleu/puzzles/parser.dart';
 import 'package:eleu/puzzles/puzzle.dart';
+import 'package:eleu/puzzles/types.dart';
 
 enum CmdMode {
   /// next line as command expected
@@ -34,6 +36,8 @@ class CmdProcessorBase {
   EEleuResult _lastResult = EEleuResult.NextStep;
   bool _outStateChanged = false;
   Stopwatch _watch = Stopwatch();
+  PuzzleBundle? _bundle;
+  int bundleIndex = 0;
 
   CmdProcessorBase(this._output);
 
@@ -74,6 +78,12 @@ class CmdProcessorBase {
       case "end_code":
       case "endcode":
         _endCodeHandler();
+        break;
+      case "puzzle":
+        _mode = CmdMode.puzzle;
+        break;
+      case "endpuzzle":
+        _endPuzzleHandler();
         break;
       case "exit":
         exit();
@@ -171,6 +181,26 @@ class CmdProcessorBase {
     }
     _watch.stop();
     _sendRunState(_lastResult == EEleuResult.NextStep);
+  }
+
+  void _endPuzzleHandler() {
+    var code = _buffer.toString();
+    _buffer.clear();
+    try {
+      var bundle = ParseBundle(code);
+      _bundle = bundle;
+      bundleIndex = 0;
+      if (bundle.Count>0)  _sendPuzzle(bundle[0]);
+    } on PuzzleParseException catch (ex) {
+      _sendError(ex.Message);
+    }
+  }
+
+  void _sendPuzzle(Puzzle puzzle) {
+    Map<String, dynamic> map = puzzle.toJson();
+    var s = jsonEncode(map);
+
+    _sendString("puzzle", s);
   }
 }
 

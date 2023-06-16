@@ -225,4 +225,25 @@ class Puzzle {
     }
     return true;
   }
+
+  List<dynamic> _gridToJson() {
+    List<dynamic> l=[];
+    for (int iy = 0; iy < RowCount; iy++) {
+      for (int ix = 0; ix < ColCount; ix++) {
+        l.add(this.get(iy, ix));   
+      }
+    }
+    return l;
+  }
+
+  /// Copies the main information (not the puzzles to Json).
+  Map<String, dynamic> toJson() => {
+        'count': Bundle.Count,
+        'index': BundleIndex,
+        'name': Name,
+        'description': Description,
+        'rows': RowCount,
+        'cols': ColCount,
+        'grid': _gridToJson(),
+      };
 }
